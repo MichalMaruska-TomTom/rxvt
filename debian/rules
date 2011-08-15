@@ -1,0 +1,103 @@
+#!/usr/bin/make -f
+include /usr/share/quilt/quilt.make
+.NONPARALLEL:
+
+CFLAGS=-Wall -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+
+build: build-stamp
+build-stamp: patch
+	dh_testdir
+	cp /usr/share/misc/config.guess autoconf/
+	cp /usr/share/misc/config.sub autoconf/
+ifeq (0,1)
+	# mmc: inverted
+	./configure     --prefix=/usr           \
+	                --mandir=/usr/share/man \
+	                --enable-languages      \
+	                --enable-everything     \
+	                --enable-xgetdefault    \
+	                --enable-ttygid         \
+	                --with-term=rxvt        \
+	                --with-x                \
+	                --with-xpm-includes=/usr/include/X11    \
+	                --with-xpm \
+			--enable-frills
+
+	$(MAKE) CFLAGS='$(CFLAGS)' rxvt
+	mv src/rxvt src/rxvt-xpm
+endif
+	./configure     --prefix=/usr           \
+	                --mandir=/usr/share/man \
+	                --enable-utmp           \
+	                --enable-wtmp           \
+	                --enable-ttygid         \
+	                --enable-xgetdefault    \
+	                --enable-mousewheel     \
+	                --enable-xterm-scroll   \
+	                --with-term=rxvt        \
+	                --with-x                \
+	                --without-xpm \
+			--enable-24bit \
+			--enable-256-color \
+			--enable-slipwheeling \
+			--enable-smart-resize \
+			--enable-keepscrolling \
+			--enable-frills \
+			--disable-transparency \
+	                --disable-languages      \
+			--disable-xim
+
+	$(MAKE) CFLAGS='$(CFLAGS)' all clock
+	mv src/rxvt src/rxvt-2.7.10
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	test ! -s Makefile || $(MAKE) -i RMF='rm -f' distclean
+	rm -f config.log src/rxvt-2.7.10 src/rxvt-xpm src/rxvtlib.h doc/rxvt.1
+	-find . "-(" -name Makefile -or -name "*.intpro" -or -name "*.extpro" "-)" -exec rm -f "{}" ";"
+	rm -f autoconf/config.guess autoconf/config.sub
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_install
+	chmod 0644 debian/rxvt-beta/usr/share/doc/rxvt-beta/examples/*
+	mv debian/rxvt-beta/usr/share/doc/rxvt-beta/rxvt-changes.txt \
+           debian/rxvt-beta/usr/share/doc/rxvt-beta/rxvt-changelog
+	dh_installmenu
+	mv debian/rxvt-beta/etc/menu-methods/rxvt-beta debian/rxvt-beta/etc/menu-methods/rxvt
+	chmod 0755 debian/rxvt-beta/etc/menu-methods/rxvt
+	mv debian/rxvt-beta/usr/share/menu/rxvt-beta debian/rxvt-beta/usr/share/menu/rxvt
+	dh_installman
+	cp -f doc/rxvt.tbl debian/rxvt-beta/usr/share/man/man1/rxvt.1
+	dh_link
+#	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

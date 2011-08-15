@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = remove ]; then
+    update-alternatives --remove rxvt /usr/bin/rxvt-xterm
+    update-alternatives --remove rxvt /usr/bin/rxvt-xpm
+    update-alternatives --remove x-terminal-emulator /usr/bin/rxvt-xterm
+    update-alternatives --remove x-terminal-emulator /usr/bin/rxvt-xpm
+    pkg=rxvt-beta
+    if [ -L /usr/doc/$pkg ]; then rm -f /usr/doc/$pkg; fi
+fi
+
+#DEBHELPER#

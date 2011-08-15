@@ -1,0 +1,129 @@
+rxvt-beta (2.7.10-6+mmc3) maverick; urgency=low
+
+  * for maverick
+
+ -- Michal Maruska <mmaruska@gmail.com>  Mon, 21 Feb 2011 09:32:39 +0100
+
+rxvt-beta (2.7.10-6+mmc2) lucid; urgency=low
+
+  * doc/changes.txt fix
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 27 Jun 2010 01:33:49 +0300
+
+rxvt-beta (2.7.10-6+mmc1) lucid; urgency=low
+
+  * my anti-flicker patch
+  * many handy extensions
+  * doc/changes.txt renamed
+  * dpatch -> quilt
+ -- Michal Maruska <mmaruska@gmail.com>  Sat, 26 Jun 2010 13:37:20 +0300
+
+rxvt-beta (2.7.10-6) unstable; urgency=low
+
+  * Adjust menu sections to the new menu policy.
+  * Bump policy compliance level to 3.7.3.
+  * Move to debhelper level 6.
+  * Fix whatis info in manpage.
+
+ -- Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>  Tue, 29 Apr 2008 00:41:57 +0200
+
+rxvt-beta (2.7.10-5) unstable; urgency=low
+
+  * Include patch from Ingo Koehne to increase the chance of getting
+    the terminal dimensions right. Thanks! Closes: #202497.
+
+ -- Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>  Thu, 26 Jul 2007 23:59:22 +0200
+
+rxvt-beta (2.7.10-4) unstable; urgency=low
+
+  * Fix assertion error. Closes: #188276.
+  * Add a manpage note regarding the lack of scrollbar style support
+    in the minimalist rxvt-xterm binary. Closes: #135733.
+  * Update the commands for the clean target.
+  * Drop handmade postrm - debhelper is better at the job.
+  * Add rxvt-ml to the list of conflicting packages because the used
+    alternatives in both packages interfere (this package distributes
+    rxvt.1.gz which rxvt and rxvt-ml use as an alternative).
+
+ -- Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>  Sun, 22 Jul 2007 02:00:25 +0200
+
+rxvt-beta (2.7.10-3) unstable; urgency=low
+
+  * Remove the superfluous rxvt.1 entry from the manpages list,
+    we use the tbl-unprocessed rxvt.tbl anyway. Fixes autobuilder
+    issues.
+
+ -- Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>  Tue, 10 Oct 2006 21:58:33 +0200
+
+rxvt-beta (2.7.10-2) unstable; urgency=low
+
+  * New maintainer.
+  * Completely revamp build system; now based on debhelper & dpatch,
+    introduce necessary build dependencies.
+  * Bump Standards Version to 3.7.2.
+  * Clean up copyright file.
+  * Drop preinst, included hack was for a version older than stable.
+  * Drop the dependency on base-passwd and the conflict with suidmanager
+    for the same reason.
+
+ -- Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>  Tue, 10 Oct 2006 11:09:33 +0200
+
+rxvt-beta (2.7.10-1) unstable; urgency=low
+
+  * QA Upload
+  * Change maintainer to QA Group
+  * Add build-dependency to libxpm-dev so that rxvt-xpm is actually
+    compiled with xpm support (D'oh!)
+  * Update Standards-Version to 3.5.9: Updated the CFLAGS handling
+    in debian/rules
+  * Clean-up fixes:
+    + Quote strings in menu file
+    + Install menu file to /usr/share/menu instead of /usr/lib/menu
+    + don't set /usr/doc link in postinst
+    + remove possible bashism in preinst
+
+ -- Frank Lichtenheld <djpig@debian.org>  Wed, 10 Aug 2005 16:42:18 +0200
+
+rxvt-beta (2.7.10-0.1) unstable; urgency=low
+
+  * NMU from Munich Bug Squash party
+  * New upstream (released March 2003)
+  * update config.sub config.guess for FTBFS (Closes: #240164)
+  * build-dep on libx11-dev, libxt-dev
+
+ -- Erich Schubert <erich@debian.org>  Sun, 18 Apr 2004 11:23:05 +0200
+
+rxvt-beta (2.7.8-5) unstable; urgency=low
+
+  * Removed rxvt-beta-ml package.  Folded multi-lingual support into
+    rxvt-beta package.  (Closes: Bug#143445)
+
+ -- Brian Mays <brian@debian.org>  Sun, 28 Apr 2002 14:05:11 -0400
+
+rxvt-beta (2.7.8-4) unstable; urgency=low
+
+  * Added patch from Geoff Wing <gcw@rxvt.org> to check for EAGAIN.
+
+ -- Brian Mays <brian@debian.org>  Tue,  9 Apr 2002 13:08:27 -0400
+
+rxvt-beta (2.7.8-3) unstable; urgency=medium
+
+  * Modified postinst to ignore an existing /usr/doc/$package directory.
+  * Updated FAQ to cover binding key sequences in bash.
+
+ -- Brian Mays <brian@debian.org>  Wed, 20 Mar 2002 13:00:11 -0500
+
+rxvt-beta (2.7.8-2) unstable; urgency=low
+
+  * Removed alternatives for rclock.
+  * Added x-t-e alternative for rxvt-xpm.  (Closes: Bug#137868)
+  * Fixed description for rxvt-ml.
+  * Changed priority to "extra".
+
+ -- Brian Mays <brian@debian.org>  Wed, 13 Mar 2002 12:48:39 -0500
+
+rxvt-beta (2.7.8-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Brian Mays <brian@debian.org>  Wed, 13 Feb 2002 12:48:20 -0500

@@ -1,0 +1,23 @@
+Source: rxvt-beta
+Section: x11
+Priority: extra
+Maintainer: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
+Build-Depends: autotools-dev, debhelper (>= 6), quilt, libx11-dev, libxt-dev, libxpm-dev
+Standards-Version: 3.7.3
+
+Package: rxvt-beta
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: rxvt, rxvt-ml
+Provides: x-terminal-emulator
+Description: VT102 terminal emulator for the X Window System
+ Rxvt is an 8-bit clean, color xterm replacement that uses significantly
+ less memory than a conventional xterm, mostly since it doesn't support
+ toolkit configurability or Tek graphics, but also since features can
+ be removed at compile-time to reflect your needs.
+ .
+ The distribution also includes rclock, the smaller/better xclock
+ replacement with appointment scheduling and xbiff functionality.
+ .
+ This package contains the developer (beta) version of rxvt.  See the
+ rxvt package for the current stable version of rxvt.
