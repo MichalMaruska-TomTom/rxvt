@@ -1154,7 +1154,7 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 	    rxvt_scr_expose(r, ev->xexpose.x, ev->xexpose.y,
 			    ev->xexpose.width, ev->xexpose.height, False);
 #else
-	    rxvt_scr_expose(r, ev->xexpose.x, 0,
+	    rxvt_scr_expose(r, ev->xexpose.x, ev->xexpose.y,
 			    ev->xexpose.width, r->TermWin.height, False);
 #endif
 	    h->want_refresh = 1;
