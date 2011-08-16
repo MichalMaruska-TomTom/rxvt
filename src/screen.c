@@ -2603,7 +2603,7 @@ rxvt_scr_clear(rxvt_t *r)
     if (!r->TermWin.mapped)
 	return;
     r->h->num_scr_allow = 0;
-    r->h->want_refresh = 1;
+    r->h->want_refresh = FAST_REFRESH;
 #ifdef TRANSPARENT
     if ((r->Options & Opt_transparent) && (r->h->am_pixmap_trans == 0)) {
 	int             i;
@@ -2617,7 +2617,9 @@ rxvt_scr_clear(rxvt_t *r)
 		XClearWindow(r->Xdisplay, r->TermWin.parent[i]);
     }
 #endif
+#if 0                           /* mmc */
     XClearWindow(r->Xdisplay, r->TermWin.vt);
+#endif
 }
 
 /* ------------------------------------------------------------------------- */
