@@ -878,6 +878,7 @@ struct rxvt_hidden {
                     am_transparent:1,
                     am_pixmap_trans:1, 
                     current_screen:1,
+                    current_output:1,
                     hate_those_clicks:1,
                     num_scr_allow:1,
                     bypass_keystate:1;
@@ -894,6 +895,7 @@ struct rxvt_hidden {
                     am_transparent,	/* is a transparent term             */
                     am_pixmap_trans,	/* transparency w/known root pixmap  */
 # endif
+                    current_output,
                     current_screen,	/* primary or secondary              */
                     hate_those_clicks,	/* a.k.a. keep mark position         */
                     num_scr_allow,
