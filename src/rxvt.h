@@ -896,6 +896,7 @@ struct rxvt_hidden {
                     parsed_geometry;
 #endif	/* !__GNUC__ */
 
+    int             vt_bit_gravity;  /*  The bit gravity inside the VT window */
     unsigned char   refresh_type, // tracks the visibility changes.
 #ifdef UTMP_SUPPORT
                     next_utmp_action,
