@@ -2053,6 +2053,11 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
 #endif
     ocrow = h->oldcursor.row; /* is there an old outline cursor on screen? */
 
+    /* This is my trick to have a frozen snapshot to display,
+       while the app does a series of complex updates. */
+    if (r->h->current_output == SECONDARY)
+        exchange_snapshot_screen(r, row_offset);
+
 /*
  * B: reverse any characters which are selected
  */
@@ -2094,6 +2099,12 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     h->num_scr = 0;
     h->num_scr_allow = 1;
     h->want_refresh = 0;	/* screen is current */
+    /* test_all_updated(r);*/
+    if (r->h->current_output == SECONDARY)
+        {
+            /* And switch it back: */
+            exchange_snapshot_screen(r, row_offset);
+        }
 }
 /* ------------------------------------------------------------------------- */
 
