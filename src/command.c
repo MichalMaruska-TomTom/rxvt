@@ -664,6 +664,7 @@ rxvt_cmd_getc(rxvt_t *r)
     int             quick_timeout, select_res;
     struct timeval  value;
     struct rxvt_hidden *h = r->h;
+    int    tryX = 1;
 
     if (h->cmdbuf_ptr < h->cmdbuf_endp)	/* characters already read in */
         return *h->cmdbuf_ptr++;
@@ -674,6 +675,8 @@ rxvt_cmd_getc(rxvt_t *r)
 	if (h->v_bufstr < h->v_bufptr)	/* output any pending chars */
 	    rxvt_tt_write(r, NULL, 0);
 
+	/* fixme: after SELECT we know this! */
+	if (tryX)
 	while (XPending(r->Xdisplay)) {	/* process pending X events */
 	    XEvent          xev;
 
@@ -738,6 +741,7 @@ rxvt_cmd_getc(rxvt_t *r)
 	/* select statement timed out - we're not hard and fast scrolling */
 	    h->refresh_limit = 1;
 	}
+	tryX = FD_ISSET(r->Xfd, &readfds);
 
     /* See if we can read new data from the application */
 	if (select_res > 0 && FD_ISSET(r->cmd_fd, &readfds)) {
