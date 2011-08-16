@@ -1086,6 +1086,7 @@ struct rxvt_hidden {
     const unsigned char *Keysym_map[256];
 #endif
     const char     *rs[NUM_RESOURCES];
+    unsigned int debug;
 /* command input buffering */
     unsigned char  *cmdbuf_ptr, *cmdbuf_endp;
     unsigned char   cmdbuf_base[BUFSIZ];
@@ -1175,6 +1176,8 @@ struct rxvt_hidden {
 # include "dmalloc.h"		/* This comes last */
 #endif
 
+/* mmc: I like the tracing output colored */
+#define mmc_debug 0
 #if 1
 #define color_reset "\x1b[0m"
 
