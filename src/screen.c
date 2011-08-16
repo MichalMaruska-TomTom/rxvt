@@ -259,8 +259,15 @@ rxvt_scr_reset(rxvt_t *r)
 
 	if (nrow < prev_nrow) {
 	    /* delete rows */
-	    k = min(r->TermWin.nscrolled, prev_nrow - nrow);
-	    rxvt_scroll_text(r, 0, (int)prev_nrow - 1, k, 1);
+	    int v_shift;
+	    /* mmc: This is my fix, for this bug:
+	       Resizing eats bottom lines, instead of pushing top lines into scroll-back. */
+	    v_shift = - ( (nrow - 1) - r->screen.cur.row);
+	    if (v_shift < 0)
+		v_shift = 0;
+	    /* the whole screen (prev) is scrolled up by v_shift  */
+	    rxvt_scroll_text(r, 0, (int)prev_nrow - 1, v_shift, 1);
+	    // and now the bottom is dropped!
 	    for (p = nrow; p < prev_nrow; p++) {
 		q = p + r->TermWin.saveLines;
 		if (r->screen.text[q]) {
