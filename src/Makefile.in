@@ -22,7 +22,7 @@ DEBUG=-DDEBUG_STRICT @DEBUG@
 first_rule: all
 dummy:
 
-LIBSRCS = command.c defaultfont.c graphics.c grkelot.c init.c logging.c \
+LIBSRCS = command.c defaultfont.c graphics.c grkelot.c heckel.c init.c logging.c \
 	main.c menubar.c misc.c netdisp.c ptytty.c screen.c scrollbar.c \
 	scrollbar-rxvt.c scrollbar-next.c scrollbar-xterm.c strings.c \
 	xdefaults.c xpm.c
@@ -45,12 +45,14 @@ RXVT_VERNAME=$(DESTDIR)$(bindir)/$(RXVT_BASENAME)-$(VERSION)$(EXEEXT)
 RXVT_OLDNAME=$(DESTDIR)$(bindir)/$(RXVT_BASENAME)-old$(EXEEXT)
 
 EXTPROS = command.extpro defaultfont.extpro graphics.extpro grkelot.extpro \
+	heckel.extpro \
 	init.extpro logging.extpro main.extpro menubar.extpro misc.extpro \
 	netdisp.extpro ptytty.extpro screen.extpro scrollbar.extpro \
 	scrollbar-rxvt.extpro scrollbar-next.extpro scrollbar-xterm.extpro \
 	strings.extpro xdefaults.extpro xpm.extpro
 
 INTPROS = command.intpro defaultfont.intpro graphics.intpro grkelot.intpro \
+	heckel.intpro \
 	init.intpro logging.intpro main.intpro menubar.intpro misc.intpro \
 	netdisp.intpro ptytty.intpro screen.intpro scrollbar.intpro \
 	scrollbar-rxvt.intpro scrollbar-next.intpro scrollbar-xterm.intpro \
@@ -168,6 +170,7 @@ command.o:          command.c   $(DEPS) command.intpro	command.h version.h
 defaultfont.o:      defaultfont.c $(DEPS) defaultfont.intpro defaultfont.h
 graphics.o:         graphics.c  $(DEPS) graphics.intpro
 grkelot.o:          grkelot.c   $(DEPS) grkelot.intpro	grkelot.h
+heckel.o:           heckel.c    $(DEPS) heckel.intpro
 init.o:             init.c      $(DEPS) init.intpro	init.h	
 logging.o:          logging.c   $(DEPS) logging.intpro	logging.h
 main.o:             main.c      $(DEPS) main.intpro
@@ -189,6 +192,7 @@ command.lo:         command.c   $(DEPS) command.intpro	command.h version.h
 defaultfont.lo:     defaultfont.c $(DEPS) defaultfont.intpro defaultfont.h
 graphics.lo:        graphics.c  $(DEPS) graphics.intpro	
 grkelot.lo:         grkelot.c   $(DEPS) grkelot.intpro	grkelot.h
+heckel.lo:          heckel.c    $(DEPS) heckel.intpro
 init.lo:            init.c      $(DEPS) init.intpro	init.h	
 logging.lo:         logging.c   $(DEPS) logging.intpro	logging.h
 main.lo:            main.c      $(DEPS) main.intpro
