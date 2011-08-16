@@ -731,10 +731,15 @@ rxvt_cmd_getc(rxvt_t *r)
 	if (!r->TermWin.mapped)
 	    quick_timeout = 0;
 	else {
-	    quick_timeout |= h->want_refresh;
+	    /* if not visible (even though mapped) -> idem! */
+	    if (h->refresh_type == NO_REFRESH) {
+		quick_timeout = 0;
+	    } else {
+		quick_timeout |= h->want_refresh;
 #ifdef TRANSPARENT
-	    quick_timeout |= h->want_full_refresh;
+		quick_timeout |= h->want_full_refresh;
 #endif
+	    }
 	}
 	if ((select_res = select(r->num_fds, &readfds, NULL, NULL,
 				 (quick_timeout ? &value : NULL))) == 0) {

@@ -896,7 +896,7 @@ struct rxvt_hidden {
                     parsed_geometry;
 #endif	/* !__GNUC__ */
 
-    unsigned char   refresh_type,
+    unsigned char   refresh_type, // tracks the visibility changes.
 #ifdef UTMP_SUPPORT
                     next_utmp_action,
 #endif
