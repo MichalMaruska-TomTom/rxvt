@@ -1070,7 +1070,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     XGCValues       gcvalue;
 
 #ifdef PREFER_24BIT
-    XSetWindowAttributes attributes;
+    XSetWindowAttributes attributes = {0};
     XWindowAttributes gattr;
 
     XCMAP = DefaultColormap(r->Xdisplay, Xscreen);
@@ -1112,7 +1112,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
  */
 
 #ifdef PREFER_24BIT
-    attributes.background_pixel = r->PixColors[Color_fg];
+    attributes.background_pixmap = None;
     attributes.border_pixel = r->PixColors[Color_border];
     attributes.colormap = XCMAP;
     r->TermWin.parent[0] = XCreateWindow(r->Xdisplay, Xroot,
@@ -1121,9 +1121,10 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					 r->TermWin.ext_bwidth,
 					 XDEPTH, InputOutput,
 					 XVISUAL,
-					 CWBackPixel | CWBorderPixel
+					 CWBackPixmap | CWBorderPixel
 					 | CWColormap, &attributes);
 #else
+    /* mmc: I don't use this */
     r->TermWin.parent[0] = XCreateSimpleWindow(r->Xdisplay, Xroot,
 					       r->szHint.x, r->szHint.y,
 					       r->szHint.width,
