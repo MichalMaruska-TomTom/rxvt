@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-include /usr/share/quilt/quilt.make
+
 .NONPARALLEL:
 
 CFLAGS=-Wall -g
@@ -10,7 +10,8 @@ CFLAGS += -O2
 endif
 
 build: build-stamp
-build-stamp: patch
+
+build-stamp:
 	dh_testdir
 	cp /usr/share/misc/config.guess autoconf/
 	cp /usr/share/misc/config.sub autoconf/
@@ -56,7 +57,7 @@ endif
 	mv src/rxvt src/rxvt-2.7.10
 	touch build-stamp
 
-clean: unpatch
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
