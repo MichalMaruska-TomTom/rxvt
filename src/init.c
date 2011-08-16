@@ -837,6 +837,8 @@ rxvt_init_command(rxvt_t *r, const char *const *argv)
     r->h->meta_char = (r->Options & Opt_meta8 ? 0x80 : C0_ESC);
 #endif
     rxvt_get_ourmods(r);
+    r->h->PrivateModes &= ~PrivMode_aplKP; /* I don't want to distinguish them by default. */
+
     if (!(r->Options & Opt_scrollTtyOutput))
 	r->h->PrivateModes |= PrivMode_TtyOutputInh;
     if (r->Options & Opt_scrollTtyKeypress)
