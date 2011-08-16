@@ -106,8 +106,6 @@ rxvt_init(int argc, const char *const *argv)
 #endif
 #ifdef TRANSPARENT
     if (r->Options & Opt_transparent) {
-        fprintf(stderr, "%sXSelectInput property on root%s\n", color_red, color_reset);
-        exit (-1);
 	XSelectInput(r->Xdisplay, Xroot, PropertyChangeMask);
 	rxvt_check_our_parents(r);
     }
@@ -222,25 +220,6 @@ rxvt_malloc(size_t size)
      exit(EXIT_FAILURE);
      /* NOTREACHED */
 }
-
-
-/* mmc: I wanted to convert some (useless) rxvt_calloc call to faster version, w/o zeroing. */
-/* EXTPROTO */
-void           *
-rxvt_alloc(size_t number, size_t size)
-{
-     void           *p;
-
-     p = malloc(number * size);
-     if (p)
-	return p;
-
-     rxvt_clean_exit();
-     exit(EXIT_FAILURE);
-     /* NOTREACHED */
-}
-
-
 
 /* EXTPROTO */
 void           *
@@ -418,11 +397,7 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
     unsigned int    max_width, max_height;
 
     r->szHint.flags = PMinSize | PResizeInc | PBaseSize | PWinGravity;
-    r->szHint.win_gravity = StaticGravity;
-    /* NorthWestGravity      mmc: harmless?
-     * This is the win grav. of the rxvt's `top'.
-     * Above that is the WM's frame window. ... Is it for resizing? */
-
+    r->szHint.win_gravity = NorthWestGravity;
     /* r->szHint.min_aspect.x = r->szHint.min_aspect.y = 1; */
 
     recalc_x = recalc_y = 0;
@@ -433,14 +408,13 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
 	    flags = XParseGeometry(r->h->rs[Rs_geometry], &x, &y, &w, &h);
 	if (flags & WidthValue) {
 	    r->TermWin.ncol = BOUND_POSITIVE_INT16(w);
-	    r->szHint.flags |= USSize; /* mmc: obsolete?
-					  http://cs.wwc.edu/~davija/XLIB/14-08.html#P1098_31441*/
+	    r->szHint.flags |= USSize;
 	}
 	if (flags & HeightValue) {
 	    r->TermWin.nrow = BOUND_POSITIVE_INT16(h);
 	    r->szHint.flags |= USSize;
 	}
-	if (flags & XValue) {   /* mmc: obsolete? */
+	if (flags & XValue) {
 	    r->szHint.x = x;
 	    r->szHint.flags |= USPosition;
 	    if (flags & XNegative) {
@@ -461,14 +435,12 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
 	}
     }
 /* TODO: BOUNDS */
-    r->TermWin.width = r->TermWin.ncol * r->TermWin.fwidth; /* mmc! when is r->TermWin.ncol updated?
-							       see the bottom here: */
+    r->TermWin.width = r->TermWin.ncol * r->TermWin.fwidth;
     r->TermWin.height = r->TermWin.nrow * r->TermWin.fheight;
-    max_width = MAX_COLS * r->TermWin.fwidth; /* mmc: that's very reasonable! */
+    max_width = MAX_COLS * r->TermWin.fwidth;
     max_height = MAX_ROWS * r->TermWin.fheight;
 
     r->szHint.base_width = r->szHint.base_height = 2 * r->TermWin.int_bwidth;
-    /* mmc: The desired width: here we just start! */
 
     sb_w = mb_h = 0;
     r->h->window_vt_x = r->h->window_vt_y = 0;
@@ -478,18 +450,17 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
 	if (!(r->Options & Opt_scrollBar_right))
 	    r->h->window_vt_x = sb_w;
     }
-    if (menubar_visible(r)) {   /* mmc: that explains, why we call this function from places
-				   where we toggle the SBar & Menu! */
+    if (menubar_visible(r)) {
 	mb_h = menuBar_TotalHeight();
 	r->szHint.base_height += mb_h;
 	r->h->window_vt_y = mb_h;
     }
-    r->szHint.width_inc = r->TermWin.fwidth; /* mmc: correct! */
+    r->szHint.width_inc = r->TermWin.fwidth;
     r->szHint.height_inc = r->TermWin.fheight;
     r->szHint.min_width = r->szHint.base_width + r->szHint.width_inc;
     r->szHint.min_height = r->szHint.base_height + r->szHint.height_inc;
 
-    if (width && width - r->szHint.base_width < max_width) { /* mmc: we accept the given width */
+    if (width && width - r->szHint.base_width < max_width) {
 	r->szHint.width = width;
 	r->TermWin.width = width - r->szHint.base_width;
     } else {
@@ -506,14 +477,13 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
     if (scrollbar_visible(r) && (r->Options & Opt_scrollBar_right))
 	r->h->window_sb_x = r->szHint.width - sb_w;
 
-    if (recalc_x)               /* mmc: the first time, after we looked at User specified Geometry ?*/
+    if (recalc_x)
 	r->szHint.x += (DisplayWidth(r->Xdisplay, Xscreen)
 			- r->szHint.width - 2 * r->TermWin.ext_bwidth);
     if (recalc_y)
 	r->szHint.y += (DisplayHeight(r->Xdisplay, Xscreen)
 			- r->szHint.height - 2 * r->TermWin.ext_bwidth);
 
-    /* mmc: finally!  */
     r->TermWin.ncol = r->TermWin.width / r->TermWin.fwidth;
     r->TermWin.nrow = r->TermWin.height / r->TermWin.fheight;
     return;
@@ -765,7 +735,7 @@ rxvt_change_font(rxvt_t *r, int init, const char *fontname)
     rxvt_set_colorfgbg(r);
 
     if (!init) {
-	rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
+	rxvt_resize_all_windows(r, 0, 0, 0);
 	rxvt_scr_touch(r, True);
     }
     return;
@@ -909,11 +879,9 @@ rxvt_set_window_color(rxvt_t *r, int idx, const char *color)
 /* XSetWindowAttributes attr; */
 /* Cursor cursor; */
   Done:
-#if 0   /* mmc: would cause (later) flicker */
     if (idx == Color_bg && !(r->Options & Opt_transparent))
 	XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 			     r->PixColors[Color_bg]);
-#endif
 
 /* handle Color_BD, scrollbar background, etc. */
 
@@ -1053,29 +1021,23 @@ rxvt_rXAllocColor(rxvt_t *r, XColor *screen_in_out, const char *colour)
     return res;
 }
 
-/* mmc: so x/y is in pixels, but is not used.
-   with/height is in cells. */
 /* -------------------------------------------------------------------- *
  * -                         WINDOW RESIZING                          - *
  * -------------------------------------------------------------------- */
 /* EXTPROTO */
 void
-rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int ignoreparent,
-			unsigned int x, unsigned int y)
+rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int ignoreparent)
 {
     int             fix_screen;
-#ifdef SMART_RESIZE
+#ifdef SMART_RESIZE	
     int             old_width = r->szHint.width,
 		    old_height = r->szHint.height;
 #endif
 
-    /* mmc: This updates  The # of cells */
     rxvt_window_calc(r, width, height);
     XSetWMNormalHints(r->Xdisplay, r->TermWin.parent[0], &r->szHint);
-    /* mmc: why here? why not on creation ? */
-    /* mmc: when user input resizes we have ignoreparent! */
     if (!ignoreparent) {
-#ifdef SMART_RESIZE
+#ifdef SMART_RESIZE	
 /*
  * resize by Marius Gedminas <marius.gedminas@uosis.mif.vu.lt>
  * reposition window on resize depending on placement on screen
@@ -1086,17 +1048,15 @@ rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int 
 	Window          unused_cr;
 
 	XTranslateCoordinates(r->Xdisplay, r->TermWin.parent[0], Xroot,
-			      /* mmc: ah the absolute coordinates! */
 			      0, 0, &x, &y, &unused_cr);
 	XGetGeometry(r->Xdisplay, r->TermWin.parent[0], &unused_cr, &x1, &y1,
-		     /* This is geometry relative to Root */
 		     &unused_w1, &unused_h1, &unused_b1, &unused_d1);
 	/*
 	 * if Xroot isn't the parent window, a WM will probably have offset
 	 * our position for handles and decorations.  Counter it
 	 */
 	if (x1 != x || y1 != y) {
-	    x -= x1;            /* relative position inside the parent, WM window. */
+	    x -= x1;
 	    y -= y1;
 	}
 
@@ -1123,7 +1083,6 @@ rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int 
 #endif
     }
 
-    /* when is screen.cur.row updated? This value is the old or new one? */
     fix_screen = (r->TermWin.ncol != r->h->prev_ncol
 		  || r->TermWin.nrow != r->h->prev_nrow);
     if (fix_screen || width != r->h->old_width || height != r->h->old_height) {
@@ -1143,7 +1102,7 @@ rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int 
 	    rxvt_Gr_Resize(r, r->h->old_width - r->szHint.base_width,
 			   r->h->old_height - r->szHint.base_height);
 #endif
-	rxvt_scr_clear(r);      /* mmc: XClearWindow does nothing in my case! */
+	rxvt_scr_clear(r);
 	rxvt_resize_pixmap(r);
     }
 
@@ -1154,7 +1113,6 @@ rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int 
 	/* scr_reset only works on the primary screen */
 	if (r->h->old_height) 	/* this is not the first time through */
 	    curr_screen = rxvt_scr_change_screen(r, PRIMARY);
-        /* mmc: This reduces/enlarges the memory! */
 	rxvt_scr_reset(r);
 	if (curr_screen >= 0) {	/* this is not the first time through */
 	    rxvt_scr_change_screen(r, curr_screen);
@@ -1190,7 +1148,7 @@ rxvt_set_widthheight(rxvt_t *r, unsigned int width, unsigned int height)
     if (width != r->TermWin.width || height != r->TermWin.height) {
 	width += r->szHint.base_width;
 	height += r->szHint.base_height;
-	rxvt_resize_all_windows(r, width, height, 0, wattr.x, wattr.y); /* mmc! correct? */
+	rxvt_resize_all_windows(r, width, height, 0);
     }
 }
 

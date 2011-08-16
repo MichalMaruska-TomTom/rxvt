@@ -346,10 +346,6 @@ enum {
 # define RS_ukFont		0x00008000u	/* UK character set */
 #endif
 
-# define RS_needs_redraw        0x01000000u /* mmc:! Mark the VT window Cell as it is in an
-					       undefined state: drawn_text/rend is false */
-
-
 #ifdef MULTICHAR_SET
 # define RS_multi0		0x10000000u	/* only multibyte characters */
 # define RS_multi1		0x20000000u	/* multibyte 1st byte */
@@ -410,9 +406,6 @@ enum {
 #define XTerm_restoreFG		39	/* change default fg color */
 #define XTerm_restoreBG		49	/* change default bg color */
 #define XTerm_dumpscreen	55	/* dump scrollback and all of screen */
-#define XTerm_set_selection	56	/* set the X selection to Pt */
-#define XTerm_set_gravity	57	/* set the (text) VT window window-gravity to
-					   Pt (NW, SE, STatic) */
 
 /* Words starting with `Color_' are colours.  Others are counts */
 /*
@@ -588,11 +581,6 @@ enum {
     Rs_modifier,
     Rs_answerbackstring,
     Rs_tripleclickwords,
-    RS_scrollstep,
-    RS_scrollpause,
-    Rs_borderless,
-    Rs_overrideRedirect,
-    Rs_bellCommand,
     NUM_RESOURCES
 } ;
 
@@ -618,7 +606,6 @@ enum {
     XA_DNDSELECTION,
 #endif				/* OFFIX_DND */
     XA_CLIPBOARD,
-    XA_NET_WM_PID,
     NUM_XA
 } ;
 
@@ -881,8 +868,6 @@ struct rxvt_hidden {
                     am_transparent:1,
                     am_pixmap_trans:1, 
                     current_screen:1,
-                    current_output:1,
-                    check_for_scrolling:1,
                     hate_those_clicks:1,
                     num_scr_allow:1,
                     bypass_keystate:1;
@@ -899,8 +884,6 @@ struct rxvt_hidden {
                     am_transparent,	/* is a transparent term             */
                     am_pixmap_trans,	/* transparency w/known root pixmap  */
 # endif
-                    current_output,
-                    check_for_scrolling,
                     current_screen,	/* primary or secondary              */
                     hate_those_clicks,	/* a.k.a. keep mark position         */
                     num_scr_allow,
@@ -913,7 +896,6 @@ struct rxvt_hidden {
                     parsed_geometry;
 #endif	/* !__GNUC__ */
 
-        int         vt_bit_gravity;  /*  The bit gravity inside the VT window */
     unsigned char   refresh_type,
 #ifdef UTMP_SUPPORT
                     next_utmp_action,
@@ -973,7 +955,6 @@ struct rxvt_hidden {
                     allowedxerror;
 /* ---------- */
     unsigned int    ModMetaMask,
-                    ModAltMask,
                     ModNumLockMask,
                     old_width,	/* last used width in screen resize          */
                     old_height,	/* last used height in screen resize         */
@@ -1109,9 +1090,6 @@ struct rxvt_hidden {
     unsigned char  *cmdbuf_ptr, *cmdbuf_endp;
     unsigned char   cmdbuf_base[BUFSIZ];
     unsigned char   kbuf[KBUFSZ];
-    unsigned int debug;
-    unsigned char scrollstep;
-    unsigned int scrollpause;
 };
 
 #ifndef __attribute__
@@ -1173,9 +1151,6 @@ struct rxvt_hidden {
 # define greek_xlat(s, num_chars)	(0)
 #endif
 
-/* init.c */
-void rxvt_get_ourmods(rxvt_t *r);
-
 #ifndef USE_XIM
 # define rxvt_setTermFontSet(r, idx)	(0)
 #endif
@@ -1199,30 +1174,5 @@ void rxvt_get_ourmods(rxvt_t *r);
 #ifdef DEBUG_malloc
 # include "dmalloc.h"		/* This comes last */
 #endif
-
-
-#define mmc_none_parent_window 1
-/* unfortunately, even the parent window is "dangerous": if I enlarge that window,
-   the new area is filled, before the VT window fills it-> flicker!  */
-
-/* mmc: I like the tracing output colored */
-#define mmc_debug 0
-#if 1
-#define color_reset "\x1b[0m"
-
-#define color_red "\x1b[38;5;160m"
-#define color_yellow "\x1b[38;5;226m"
-#define color_green "\x1b[38;5;159m"
-#define color_cyan "\x1b[38;5;177m"
-#else
-#define color_reset ""
-
-#define color_red ""
-#define color_yellow ""
-#define color_green ""
-#define color_cyan ""
-
-#endif
-
 
 #endif				/* _RXVT_H_ */

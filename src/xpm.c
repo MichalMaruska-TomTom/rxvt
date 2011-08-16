@@ -157,11 +157,9 @@ rxvt_resize_pixmap(rxvt_t *r)
 
     if (r->h->bgPixmap.pixmap == None) { /* So be it: I'm not using pixmaps */
 	r->TermWin.pixmap = None;
-#if 0
 	if (!(r->Options & Opt_transparent) || r->h->am_transparent == 0)
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
-#endif
 	return;
     }
 
@@ -236,9 +234,7 @@ rxvt_resize_pixmap(rxvt_t *r)
 	    XFreePixmap(r->Xdisplay, tmp);
 	}
     }
-#if 0                           /* mmc: fixme! */
     XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.vt, r->TermWin.pixmap);
-#endif
     XFreeGC(r->Xdisplay, gc);
     r->h->am_transparent = 0;
 

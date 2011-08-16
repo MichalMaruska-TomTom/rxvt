@@ -108,9 +108,6 @@ static const struct {
 	 "scroll-on-tty-output inhibit"),
     BOOL(Rs_scrollTtyKeypress, "scrollTtyKeypress", "sk", Opt_scrollTtyKeypress,
 	 "scroll-on-keypress"),
-    BOOL(Rs_borderless, "borderless", "nb", Opt_borderless, "use MWM hints to remove the window border"),
-    BOOL(Rs_overrideRedirect, "overrideRedirect", "or", Opt_overrideredirect, "set the override_redirect flag"),
-    STRG(Rs_bellCommand, "bellCommand", "bc", "string", "command to execute instead of beeping"),
     BOOL(Rs_scrollWithBuffer, "scrollWithBuffer", "sw", Opt_scrollWithBuffer,
 	 "scroll-with-buffer"),
 #ifdef TRANSPARENT
@@ -304,11 +301,7 @@ static const struct {
     RSTRG(Rs_cutchars, "cutchars", "string"),
 #endif				/* CUTCHAR_RESOURCE */
     RSTRG(Rs_answerbackstring, "answerbackString", "string"),
-    INFO("e", "command arg ...", "command to execute"),
-    STRG(RS_scrollstep, "scrollstep", "scrollstep", "scrollstep",
-         "number of pixels to scroll in each substep"),
-    STRG(RS_scrollpause, "scrollpause", "scrollpause", "scrollpause",
-         "number of microseconds to wait between scroll substeps"),
+    INFO("e", "command arg ...", "command to execute")
 };
 
 #undef INFO
@@ -734,7 +727,7 @@ rxvt_get_xdefaults(rxvt_t *r, FILE *stream, const char *name)
 	    str++;		/* leading whitespace */
 
 	if ((str[len] != '*' && str[len] != '.')
-	    || (len && STRNCMP(str, name, len))) /* mmc!  here we match! ^[ ]*rxvt */
+	    || (len && STRNCMP(str, name, len)))
 	    continue;
 	str += (len + 1);	/* skip `name*' or `name.' */
 

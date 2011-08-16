@@ -346,8 +346,7 @@ const char *const xa_names[NUM_XA] = {
     "DndProtocol",
     "DndSelection",
 #endif
-    "CLIPBOARD",
-    "_NET_WM_PID"
+    "CLIPBOARD"
 };
 
 /*----------------------------------------------------------------------*/
@@ -469,12 +468,6 @@ rxvt_init_vars(rxvt_t *r)
     h->CurrentBar = &(h->BarList);
 # endif				/* (MENUBAR_MAX > 1) */
 #endif
-    {
-      char* debug = getenv("DEBUG");
-      r->h->debug=debug?atoi(debug):0;
-    }
-    r->h->scrollstep = 3;       /* default */
-    r->h->scrollpause = 10000;       /* default */
     return 0;
 }
 
@@ -690,10 +683,6 @@ rxvt_init_resources(rxvt_t *r, int argc, const char *const *argv)
     rxvt_color_aliases(r, Color_RV);
 #endif				/* ! NO_BOLD_UNDERLINE_REVERSE */
 
-    if (rs[RS_scrollstep])
-            r->h->scrollstep = atoi(rs[RS_scrollstep]);
-    if (rs[RS_scrollpause])
-            r->h->scrollpause = atoi(rs[RS_scrollpause]);
     return cmd_argv;
 }
 
@@ -832,12 +821,6 @@ rxvt_init_command(rxvt_t *r, const char *const *argv)
     XSetWMProtocols(r->Xdisplay, r->TermWin.parent[0],
 		    &(r->h->xa[XA_WMDELETEWINDOW]), 1);
 
-    {
-      long pid = getpid ();
-      XChangeProperty (r->Xdisplay, r->TermWin.parent[0],
-		       r->h->xa[XA_NET_WM_PID], XA_CARDINAL, 32,
-		       PropModeReplace, (unsigned char *)&pid, 1);
-    }
 #ifdef USING_W11LIB
 /* enable W11 callbacks */
     W11AddEventHandler(r->Xdisplay, rxvt_W11_process_x_event);
@@ -854,9 +837,6 @@ rxvt_init_command(rxvt_t *r, const char *const *argv)
     r->h->meta_char = (r->Options & Opt_meta8 ? 0x80 : C0_ESC);
 #endif
     rxvt_get_ourmods(r);
-    /* mmc: */
-    r->h->PrivateModes &= ~PrivMode_aplKP; /* I don't want to distinguish them by default. */
-
     if (!(r->Options & Opt_scrollTtyOutput))
 	r->h->PrivateModes |= PrivMode_TtyOutputInh;
     if (r->Options & Opt_scrollTtyKeypress)
@@ -1017,7 +997,6 @@ rxvt_color_aliases(rxvt_t *r, int idx)
  * Probe the modifier keymap to get the Meta (Alt) and Num_Lock settings
  * Use resource ``modifier'' to override the Meta modifier
  */
-/* mmc: fixme: This should be called on  `XKeyMapNotify' */
 /* INTPROTO */
 void
 rxvt_get_ourmods(rxvt_t *r)
@@ -1038,7 +1017,6 @@ rxvt_get_ourmods(rxvt_t *r)
 
     map = XGetModifierMapping(r->Xdisplay);
     kc = map->modifiermap;
-    /* i is the modifier BIT (not shift, control, lock) */
     for (i = 1; i < 6; i++) {
 	k = (i + 2) * map->max_keypermod;	/* skip shift/lock/control */
 	for (j = map->max_keypermod; j--; k++) {
@@ -1059,7 +1037,6 @@ rxvt_get_ourmods(rxvt_t *r)
 	    case XK_Alt_R:
 		cm = "alt";
 		realalt = i;
-                r->h->ModAltMask = modmasks[i-1];
 		break;
 	    case XK_Super_L:
 	    case XK_Super_R:
@@ -1093,7 +1070,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     XGCValues       gcvalue;
 
 #ifdef PREFER_24BIT
-    XSetWindowAttributes attributes = {0};
+    XSetWindowAttributes attributes;
     XWindowAttributes gattr;
 
     XCMAP = DefaultColormap(r->Xdisplay, Xscreen);
@@ -1130,18 +1107,12 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     r->h->old_width = r->szHint.width;
     r->h->old_height = r->szHint.height;
 
-    /* mmc: */
-#if 0
-    r->h->old_x = 0;
-    r->h->old_y = 0;
-#endif
 /* parent window - reverse video so we can see placement errors
  * sub-window placement & size in rxvt_resize_subwindows()
  */
 
 #ifdef PREFER_24BIT
-    attributes.background_pixmap = None;
-    attributes.win_gravity = StaticGravity; /* useless! inside the WM frame */
+    attributes.background_pixel = r->PixColors[Color_fg];
     attributes.border_pixel = r->PixColors[Color_border];
     attributes.colormap = XCMAP;
     r->TermWin.parent[0] = XCreateWindow(r->Xdisplay, Xroot,
@@ -1150,11 +1121,9 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					 r->TermWin.ext_bwidth,
 					 XDEPTH, InputOutput,
 					 XVISUAL,
-                                         CWBackPixmap | CWWinGravity
-					 | CWBorderPixel
+					 CWBackPixel | CWBorderPixel
 					 | CWColormap, &attributes);
 #else
-    /* mmc: I don't use this */
     r->TermWin.parent[0] = XCreateSimpleWindow(r->Xdisplay, Xroot,
 					       r->szHint.x, r->szHint.y,
 					       r->szHint.width,
@@ -1163,13 +1132,6 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					       r->PixColors[Color_border],
 					       r->PixColors[Color_fg]);
 #endif
-     if (r->Options & Opt_overrideredirect) {
-       XSetWindowAttributes attrib;
-
-       attrib.override_redirect = True;
-       XChangeWindowAttributes(r->Xdisplay, r->TermWin.parent[0],
-                               CWOverrideRedirect, &attrib);
-     }
     rxvt_xterm_seq(r, XTerm_title, r->h->rs[Rs_title], CHAR_ST);
     rxvt_xterm_seq(r, XTerm_iconName, r->h->rs[Rs_iconName], CHAR_ST);
 
@@ -1189,10 +1151,8 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 #if defined(MOUSE_WHEEL) && defined(MOUSE_SLIP_WHEELING)
 		  | KeyReleaseMask
 #endif
-		  | FocusChangeMask
-                  | VisibilityChangeMask
-		  | StructureNotifyMask
-		  ));
+		  | FocusChangeMask | VisibilityChangeMask
+		  | StructureNotifyMask));
 
 /* vt cursor: Black-on-White is standard, but this is more popular */
     r->TermWin_cursor = XCreateFontCursor(r->Xdisplay, XC_xterm);
@@ -1211,20 +1171,6 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					0,
 					r->PixColors[Color_fg],
 					r->PixColors[Color_bg]);
-    {
-        XSetWindowAttributes attributes = {0};
-        attributes.background_pixmap = None;
-        attributes.bit_gravity = StaticGravity; /* ForgetGravity */
-
-        /* mmc: win_gravity:  NorthWest is useful, if:
-	   application wants it
-	or we don't have scrollback (history) */
-        attributes.win_gravity = StaticGravity; /* ForgetGravity */
-
-        XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
-                                CWBackPixmap | CWBitGravity | CWWinGravity,
-                                &attributes);
-    }
 #ifdef DEBUG_X
     XStoreName(r->Xdisplay, r->TermWin.vt, "vt window");
 #endif
@@ -1274,14 +1220,6 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     r->TermWin.gc = XCreateGC(r->Xdisplay, r->TermWin.vt,
 			      GCForeground | GCBackground
 			      | GCFont | GCGraphicsExposures, &gcvalue);
-
-    /* mmc:   I could use ClearArea instead of FillArea (& then not need this)?*/
-    gcvalue.foreground = r->PixColors[Color_bg];
-    gcvalue.background = r->PixColors[Color_fg];
-    r->TermWin.background_gc = XCreateGC(r->Xdisplay, r->TermWin.vt,
-                                         GCForeground | GCBackground
-                                         /* | GCFont | GCGraphicsExposures */,
-                                         &gcvalue);
 
 #if defined(MENUBAR) || defined(RXVT_SCROLLBAR)
     gcvalue.foreground = r->PixColors[Color_topShadow];

@@ -664,8 +664,6 @@ rxvt_cmd_getc(rxvt_t *r)
     int             quick_timeout, select_res;
     struct timeval  value;
     struct rxvt_hidden *h = r->h;
-    int    tryX = 1;
-
 
     if (h->cmdbuf_ptr < h->cmdbuf_endp)	/* characters already read in */
         return *h->cmdbuf_ptr++;
@@ -676,13 +674,10 @@ rxvt_cmd_getc(rxvt_t *r)
 	if (h->v_bufstr < h->v_bufptr)	/* output any pending chars */
 	    rxvt_tt_write(r, NULL, 0);
 
-        /* fixme: after SELECT we know this! */
-        if (tryX)
 	while (XPending(r->Xdisplay)) {	/* process pending X events */
 	    XEvent          xev;
 
 	    XNextEvent(r->Xdisplay, &xev);
-            // fprintf(stderr, "%s%d%s\n", color_red, xev.xany.window, color_reset);
 #ifdef USE_XIM
 	    if (!XFilterEvent(&xev, xev.xany.window))
 		rxvt_process_x_event(r, &xev);
@@ -730,26 +725,19 @@ rxvt_cmd_getc(rxvt_t *r)
 	value.tv_usec = TIMEOUT_USEC;
 	value.tv_sec = 0;
 
-        /* if non visible (even though mapped) -> idem!*/
 	if (!r->TermWin.mapped)
 	    quick_timeout = 0;
 	else {
-            if (h->refresh_type != NO_REFRESH)
-            {
-                quick_timeout |= h->want_refresh;
+	    quick_timeout |= h->want_refresh;
 #ifdef TRANSPARENT
-                quick_timeout |= h->want_full_refresh;
+	    quick_timeout |= h->want_full_refresh;
 #endif
-            } else
-                quick_timeout = 0;
 	}
 	if ((select_res = select(r->num_fds, &readfds, NULL, NULL,
 				 (quick_timeout ? &value : NULL))) == 0) {
 	/* select statement timed out - we're not hard and fast scrolling */
 	    h->refresh_limit = 1;
 	}
-
-        tryX = FD_ISSET(r->Xfd, &readfds);
 
     /* See if we can read new data from the application */
 	if (select_res > 0 && FD_ISSET(r->cmd_fd, &readfds)) {
@@ -1084,7 +1072,7 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 					    ConfigureNotify, ev));
 	    if (r->szHint.width != width || r->szHint.height != height)
 		rxvt_resize_all_windows(r, (unsigned int)width,
-					(unsigned int)height, 1, 0, 0);
+					(unsigned int)height, 1);
 #ifdef TRANSPARENT		/* XXX: maybe not needed - leave in for now */
 	    if (r->Options & Opt_transparent) {
 		rxvt_check_our_parents(r);
@@ -2784,7 +2772,7 @@ rxvt_process_terminal_mode(rxvt_t *r, int mode, int priv __attribute__((unused))
 #ifdef scrollBar_esc
 	case scrollBar_esc:
 	    if (rxvt_scrollbar_mapping(r, state)) {
-                rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
+		rxvt_resize_all_windows(r, 0, 0, 0);
 		rxvt_scr_touch(r, True);
 	    }
 	    break;
