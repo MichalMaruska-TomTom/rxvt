@@ -1050,24 +1050,31 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 	break;
 
     case FocusIn:
-	if (!r->TermWin.focus) {
-	    r->TermWin.focus = 1;
-	    h->want_refresh = 1;
+	if (!(ev->xfocus.detail == NotifyPointer))
+	{
+	    /* mode == NotifyGrab) */
+	    if (!r->TermWin.focus) {
+		r->TermWin.focus = 1;
+		h->want_refresh = 1;
 #ifdef USE_XIM
-	    if (h->Input_Context != NULL)
-		XSetICFocus(h->Input_Context);
+		if (h->Input_Context != NULL)
+		    XSetICFocus(h->Input_Context);
 #endif
+	    }
 	}
 	break;
 
     case FocusOut:
-	if (r->TermWin.focus) {
-	    r->TermWin.focus = 0;
-	    h->want_refresh = 1;
+	if (!(ev->xfocus.detail == NotifyPointer))
+	{
+	    if (r->TermWin.focus) {
+		r->TermWin.focus = 0;
+		h->want_refresh = 1;
 #ifdef USE_XIM
-	    if (h->Input_Context != NULL)
-		XUnsetICFocus(h->Input_Context);
+		if (h->Input_Context != NULL)
+		    XUnsetICFocus(h->Input_Context);
 #endif
+	    }
 	}
 	break;
 
