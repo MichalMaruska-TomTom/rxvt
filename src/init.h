@@ -116,7 +116,7 @@
 # define CDSUSP		'\031'	/* ^Y */
 #endif
 #ifndef CRPRNT
-# define CRPRNT		'\022'	/* ^R */
+# define CRPRNT		'\024'	/* ^T  mmc: changed from ^R -- used in shell! */
 #endif
 #ifndef CFLUSH
 # define CFLUSH		'\017'	/* ^O */
