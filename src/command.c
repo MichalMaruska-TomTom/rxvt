@@ -1023,6 +1023,7 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 
     case MappingNotify:
 	XRefreshKeyboardMapping(&(ev->xmapping));
+	rxvt_get_ourmods(r);
 	break;
 
     /*
