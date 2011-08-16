@@ -195,6 +195,11 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 		case XK_KP_Subtract:	/* Shift+KP_Subtract = smaller font */
 		    rxvt_change_font(r, 0, FONT_DN);
 		    return;
+                case XK_KP_Multiply:
+                    rxvt_scr_change_screen(r, (r->h->current_screen == PRIMARY)
+					   ?SECONDARY:PRIMARY);
+                    r->h->current_output = PRIMARY;
+                    return;
 		}
 	    }
 	}
