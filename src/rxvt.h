@@ -586,6 +586,9 @@ enum {
     Rs_tripleclickwords,
     RS_scrollstep,
     RS_scrollpause,
+    Rs_borderless,
+    Rs_overrideRedirect,
+    Rs_bellCommand,
     NUM_RESOURCES
 } ;
 
