@@ -145,16 +145,20 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 #else
 		lnsppg = r->TermWin.nrow * 4 / 5;
 #endif
-		if (keysym == XK_Prior) {
+                    /* fixme: This is a quick test: */
+                r->h->check_for_scrolling = 1;
+                if (keysym == XK_Prior) { /* mmc: shouldn't it be  XK_Page_Up ?*/
 		    rxvt_scr_page(r, UP, lnsppg);
 		    return;
-		} else if (keysym == XK_Next) {
+                } else if (keysym == XK_Next) { /* XK_Page_Down */
 		    rxvt_scr_page(r, DN, lnsppg);
 		    return;
 		}
 	    }
 #ifdef SCROLL_ON_UPDOWN_KEYS
 	    if (IS_SCROLL_MOD) {
+                /* fixme: This is a quick test: */
+                r->h->check_for_scrolling = 1;
 		if (keysym == XK_Up) {
 		    rxvt_scr_page(r, UP, 1);
 		    return;
