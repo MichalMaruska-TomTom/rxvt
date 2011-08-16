@@ -421,7 +421,11 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
     unsigned int    max_width, max_height;
 
     r->szHint.flags = PMinSize | PResizeInc | PBaseSize | PWinGravity;
-    r->szHint.win_gravity = NorthWestGravity;
+    r->szHint.win_gravity = StaticGravity;
+    /* NorthWestGravity      mmc: harmless?
+     * This is the win grav. of the rxvt's `top'.
+     * Above that is the WM's frame window. ... Is it for resizing? */
+
     /* r->szHint.min_aspect.x = r->szHint.min_aspect.y = 1; */
 
     recalc_x = recalc_y = 0;
