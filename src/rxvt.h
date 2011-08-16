@@ -584,6 +584,8 @@ enum {
     Rs_modifier,
     Rs_answerbackstring,
     Rs_tripleclickwords,
+    RS_scrollstep,
+    RS_scrollpause,
     NUM_RESOURCES
 } ;
 
@@ -1093,6 +1095,8 @@ struct rxvt_hidden {
     unsigned char  *cmdbuf_ptr, *cmdbuf_endp;
     unsigned char   cmdbuf_base[BUFSIZ];
     unsigned char   kbuf[KBUFSZ];
+    unsigned char scrollstep;
+    unsigned int scrollpause;
 };
 
 #ifndef __attribute__

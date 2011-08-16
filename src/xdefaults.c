@@ -301,7 +301,11 @@ static const struct {
     RSTRG(Rs_cutchars, "cutchars", "string"),
 #endif				/* CUTCHAR_RESOURCE */
     RSTRG(Rs_answerbackstring, "answerbackString", "string"),
-    INFO("e", "command arg ...", "command to execute")
+    INFO("e", "command arg ...", "command to execute"),
+    STRG(RS_scrollstep, "scrollstep", "scrollstep", "scrollstep",
+         "number of pixels to scroll in each substep"),
+    STRG(RS_scrollpause, "scrollpause", "scrollpause", "scrollpause",
+         "number of microseconds to wait between scroll substeps"),
 };
 
 #undef INFO
