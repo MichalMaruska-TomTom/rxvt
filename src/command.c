@@ -2801,7 +2801,7 @@ rxvt_process_terminal_mode(rxvt_t *r, int mode, int priv __attribute__((unused))
 #ifdef scrollBar_esc
 	case scrollBar_esc:
 	    if (rxvt_scrollbar_mapping(r, state)) {
-		rxvt_resize_all_windows(r, 0, 0, 0);
+		rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
 		rxvt_scr_touch(r, True);
 	    }
 	    break;
