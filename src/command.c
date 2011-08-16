@@ -115,6 +115,14 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
     if (valid_keysym)
 #endif
     {
+	/* C-M-y pastes the selection. */
+	if (ctrl && meta) {
+	    if (keysym == XK_y) {
+		rxvt_selection_request(r, ev->time, 0, 0);
+		return ;
+	    }
+	}
+
 /* for some backwards compatibility */
 #if defined(HOTKEY_CTRL) || defined(HOTKEY_META)
 # ifdef HOTKEY_CTRL
