@@ -1947,6 +1947,22 @@ rxvt_process_escape_seq(rxvt_t *r)
 	break;
 #endif
 #ifndef NO_FRILLS
+    case '1': {
+        /* mmc: Toggle Static & NW gravity: */
+        XSetWindowAttributes attributes = {0};
+        fprintf(stderr, "setting Window gravity\n");
+        attributes.win_gravity = NorthWestGravity;
+        XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+                                CWWinGravity,
+                                &attributes);
+        break;
+    }
+    case '2':
+        r->h->vt_bit_gravity = NorthWestGravity;
+        break;
+    case '3':
+	r->h->vt_bit_gravity = StaticGravity;
+	break;
     case '6':
 	rxvt_scr_backindex(r);
 	break;
