@@ -1072,16 +1072,23 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 
     case ConfigureNotify:
 	if (ev->xconfigure.window == r->TermWin.parent[0]) {
+            /* mmc: I want to use bit gravity static. Maybe one day I will be ready
+             * to reuse static bits, after the
+             * Top window has been resized NW, VT window is static window gravity. */
 	    int             height, width;
+            int x,y;
 
 	    do {	/* Wrap lots of configures into one */
 		width = ev->xconfigure.width;
 		height = ev->xconfigure.height;
+                x =  ev->xconfigure.x;
+                y =  ev->xconfigure.y;
 	    } while (XCheckTypedWindowEvent(r->Xdisplay, ev->xconfigure.window,
 					    ConfigureNotify, ev));
 	    if (r->szHint.width != width || r->szHint.height != height)
 		rxvt_resize_all_windows(r, (unsigned int)width,
-					(unsigned int)height, 1);
+					/* mmc: why is (unsigned int)  necessary? */
+					(unsigned int)height, 1, (unsigned int)x, (unsigned int)y);
 #ifdef TRANSPARENT		/* XXX: maybe not needed - leave in for now */
 	    if (r->Options & Opt_transparent) {
 		rxvt_check_our_parents(r);
