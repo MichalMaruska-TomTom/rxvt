@@ -221,6 +221,28 @@ rxvt_malloc(size_t size)
      /* NOTREACHED */
 }
 
+/* mmc: I wanted to convert some (useless) rxvt_calloc call to faster version, w/o zeroing. */
+/* EXTPROTO */
+void           *
+rxvt_alloc(size_t number, size_t size)
+{
+     void           *p;
+
+     // fixme: this can overflow integer, and error should be returned!
+     if ( (long)number * size > MAX_INT) {
+	 rxvt_clean_exit();
+	 exit(EXIT_FAILURE);
+     }
+
+     p = malloc(number * size);
+     if (p)
+	return p;
+
+     rxvt_clean_exit();
+     exit(EXIT_FAILURE);
+     /* NOTREACHED */
+}
+
 /* EXTPROTO */
 void           *
 rxvt_calloc(size_t number, size_t size)
