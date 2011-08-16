@@ -1221,6 +1221,14 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 			      GCForeground | GCBackground
 			      | GCFont | GCGraphicsExposures, &gcvalue);
 
+    /* mmc:   I could use ClearArea instead of FillArea (& then not need this)?*/
+    gcvalue.foreground = r->PixColors[Color_bg];
+    gcvalue.background = r->PixColors[Color_fg];
+    r->TermWin.background_gc = XCreateGC(r->Xdisplay, r->TermWin.vt,
+					 GCForeground | GCBackground
+					 /* | GCFont | GCGraphicsExposures */,
+					 &gcvalue);
+
 #if defined(MENUBAR) || defined(RXVT_SCROLLBAR)
     gcvalue.foreground = r->PixColors[Color_topShadow];
     r->h->topShadowGC = XCreateGC(r->Xdisplay, r->TermWin.vt,
