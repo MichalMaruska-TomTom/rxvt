@@ -1175,4 +1175,20 @@ struct rxvt_hidden {
 # include "dmalloc.h"		/* This comes last */
 #endif
 
+#if 1
+#define color_reset "\x1b[0m"
+
+#define color_red "\x1b[38;5;160m"
+#define color_yellow "\x1b[38;5;226m"
+#define color_green "\x1b[38;5;159m"
+#define color_cyan "\x1b[38;5;177m"
+#else
+#define color_reset ""
+
+#define color_red ""
+#define color_yellow ""
+#define color_green ""
+#define color_cyan ""
+
+#endif
 #endif				/* _RXVT_H_ */
