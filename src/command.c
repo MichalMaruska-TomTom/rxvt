@@ -56,7 +56,7 @@
 void
 rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 {
-    int             ctrl, meta, shft, len;
+    int             ctrl, meta, shft, alt, len;
     unsigned int    newlen;
     KeySym          keysym;
 #ifdef DEBUG_CMD
@@ -76,6 +76,7 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
     shft = (ev->state & ShiftMask);
     ctrl = (ev->state & ControlMask);
     meta = (ev->state & r->h->ModMetaMask);
+    alt = (ev->state & r->h->ModAltMask);
     if (r->numlock_state || (ev->state & r->h->ModNumLockMask)) {
 	r->numlock_state = (ev->state & r->h->ModNumLockMask);
 	PrivMode((!r->numlock_state), PrivMode_aplKP);

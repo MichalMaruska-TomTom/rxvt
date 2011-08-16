@@ -955,6 +955,7 @@ struct rxvt_hidden {
                     allowedxerror;
 /* ---------- */
     unsigned int    ModMetaMask,
+                    ModAltMask,
                     ModNumLockMask,
                     old_width,	/* last used width in screen resize          */
                     old_height,	/* last used height in screen resize         */
