@@ -106,6 +106,8 @@ rxvt_init(int argc, const char *const *argv)
 #endif
 #ifdef TRANSPARENT
     if (r->Options & Opt_transparent) {
+        fprintf(stderr, "%sXSelectInput property on root%s\n", color_red, color_reset);
+        exit (-1);
 	XSelectInput(r->Xdisplay, Xroot, PropertyChangeMask);
 	rxvt_check_our_parents(r);
     }
