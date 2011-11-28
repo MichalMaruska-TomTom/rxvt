@@ -1179,7 +1179,12 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     {
 	XSetWindowAttributes attributes = {0};
 	attributes.background_pixmap = None;
+	attributes.bit_gravity = StaticGravity; /* ForgetGravity */
 
+	/* mmc: win_gravity:  NorthWest is useful, if:
+	   application wants it
+	   or we don't have scrollback (history) */
+	attributes.win_gravity = StaticGravity; /* ForgetGravity */
 
 	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
 				CWBackPixmap | CWBitGravity | CWWinGravity,
