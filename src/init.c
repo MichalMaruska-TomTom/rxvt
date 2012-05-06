@@ -1115,6 +1115,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 
 #ifdef PREFER_24BIT
     attributes.background_pixmap = None;
+    attributes.win_gravity = StaticGravity; /* useless! inside the WM frame */
     attributes.border_pixel = r->PixColors[Color_border];
     attributes.colormap = XCMAP;
     r->TermWin.parent[0] = XCreateWindow(r->Xdisplay, Xroot,
@@ -1124,6 +1125,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					 XDEPTH, InputOutput,
 					 XVISUAL,
 					 CWBackPixmap | CWBorderPixel
+					 | CWWinGravity
 					 | CWColormap, &attributes);
 #else
     /* mmc: I don't use this */
