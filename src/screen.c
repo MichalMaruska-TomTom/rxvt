@@ -102,23 +102,37 @@ const KNOWN_ENCODINGS known_encodings[] = {
  */
 #define drawBuffer	(r->TermWin.vt)
 
+/* mmc: Since I set the background to None, I have to explicitetly fill with bg color. */
 #define CLEAR_ROWS(row, num)						\
+{\
+    D_SCREEN((stderr, "%s %sCLEAR_ROWS%s: (%d -- %d)\n", __FUNCTION__,color_yellow, \
+	      color_reset,row, num));					\
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, r->TermWin.int_bwidth,	\
-		   Row2Pixel(row), (unsigned int)r->TermWin.width,	\
-		   (unsigned int)Height2Pixel(num), False)
+	XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		       r->TermWin.int_bwidth, Row2Pixel(row),	\
+		       (unsigned int)r->TermWin.width,	\
+		       (unsigned int)Height2Pixel(num)); \
+}
 
+/* mmc: Since I set the background to None, I have to explicitely fill with bg color. */
 #define CLEAR_CHARS(x, y, num)						\
+{\
+    D_SCREEN((stderr, "%s CLEAR_CHARS: (%d, %d -- %d)\n", __FUNCTION__,x, y, num));\
+    \
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, x, y,			\
+       XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		   x, y,					   \
 		   (unsigned int)Width2Pixel(num),			\
-		   (unsigned int)Height2Pixel(1), False)
+		      (unsigned int)Height2Pixel(1));		   \
+}
 
+/* mmc:  Foreground color!  XFillRectangle  */
 #define ERASE_ROWS(row, num)						\
     XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,		\
 		   r->TermWin.int_bwidth, Row2Pixel(row),		\
 		   (unsigned int)r->TermWin.width,			\
-		   (unsigned int)Height2Pixel(num))
+		   (unsigned int)Height2Pixel(num));\
+}
 
 /* ------------------------------------------------------------------------- *
  *                        SCREEN `COMMON' ROUTINES                           *
