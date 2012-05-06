@@ -1535,6 +1535,7 @@ rxvt_check_our_parents(rxvt_t *r)
     if (rootdepth != wattr.depth) {
 	if (r->h->am_transparent) {
 	    pchanged = 1;
+	    /* mmc: I have no idea if I use this: i don't use trasparency!*/
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
 	    r->h->am_transparent = r->h->am_pixmap_trans = 0;
@@ -1617,8 +1618,10 @@ rxvt_check_our_parents(rxvt_t *r)
 		      (unsigned int)image->height);
 	    XFreeGC(r->Xdisplay, gc);
 	    XDestroyImage(image);
+#if 0       /* mmc!  see my comment above */
 	    XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.vt,
 				       r->TermWin.pixmap);
+#endif
 	    if (!r->h->am_transparent || !r->h->am_pixmap_trans)
 		pchanged = 1;
 	    r->h->am_transparent = r->h->am_pixmap_trans = 1;
@@ -1661,6 +1664,8 @@ rxvt_check_our_parents(rxvt_t *r)
 	    D_X((stderr, "InheritPixmap Turning off"));
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.parent[0],
 				 r->PixColors[Color_fg]);
+	    /* mmc: maybe we switch off transparency here?  Then I should set
+	       BackgroundPixmap to None. Fixme! */
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
 	    r->h->am_transparent = 0;
@@ -1681,8 +1686,10 @@ rxvt_check_our_parents(rxvt_t *r)
 	    for (n = 0; n < (unsigned int)i; n++)
 		XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.parent[n],
 					   ParentRelative);
+#if 0       /* mmc: no idea yet */
 	    XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.vt,
 				       ParentRelative);
+#endif
 	    r->h->am_transparent = 1;
 	}
 	for (; i < (int)(sizeof(r->TermWin.parent) / sizeof(Window)); i++)
