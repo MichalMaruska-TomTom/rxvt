@@ -2529,6 +2529,7 @@ rxvt_process_osc_seq(rxvt_t *r)
  *      39 = change default fg color
  *      49 = change default bg color
  *      55 = dump scrollback buffer and all of screen
+ *      56 = set X PRIMARY selection
  */
 /* EXTPROTO */
 void
@@ -2546,6 +2547,8 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
     /* FALLTHROUGH */
     case XTerm_iconName:
 	rxvt_set_iconName(r, str);
+	break;
+    case XTerm_set_selection:
 	break;
     case XTerm_title:
 	rxvt_set_title(r, str);

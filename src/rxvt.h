@@ -406,6 +406,7 @@ enum {
 #define XTerm_restoreFG		39	/* change default fg color */
 #define XTerm_restoreBG		49	/* change default bg color */
 #define XTerm_dumpscreen	55	/* dump scrollback and all of screen */
+#define XTerm_set_selection	56	/* set the X selection to Pt */
 
 /* Words starting with `Color_' are colours.  Others are counts */
 /*
