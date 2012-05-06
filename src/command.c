@@ -1963,6 +1963,53 @@ rxvt_process_escape_seq(rxvt_t *r)
     case '3':
 	r->h->vt_bit_gravity = StaticGravity;
 	break;
+    case '4':
+#if mmc_debug
+        fprintf(stderr, "mmc! %d %d -> PRIMARY\n", r->h->current_output, PRIMARY);
+#endif
+        r->h->check_for_scrolling = 1;
+	r->h->current_output = PRIMARY;
+	break;
+
+    case '5':                   /* This starts a transaction */
+#if mmc_debug
+        fprintf(stderr, "mmc! %d %d ->SECONDARY\n", r->h->current_output, SECONDARY);
+#endif
+        /* fixme: copy ! */
+	r->h->current_output = SECONDARY;
+        {
+            /* ugly hack, sorry */
+            int offset = r->TermWin.saveLines; /* (mmc:) number of lines that fit in scrollback */
+            int i;
+            for (i = r->h->prev_nrow; i--;) {
+                int ncol = r->h->prev_ncol; /* fixme: r->TermWin.ncol ?*/
+                if (NULL == r->snapshot.text[i])
+                    {
+                        r->snapshot.text[i] = rxvt_calloc(ncol, sizeof(text_t));
+                        r->snapshot.rend[i] = rxvt_calloc(ncol, sizeof(rend_t));
+                    }
+#if 1
+                /* not from ->screen ? but sometimes also from ->swap ? */
+                memcpy(r->snapshot.text[i], r->screen.text[i + offset], (sizeof (text_t) * ncol));
+                memcpy(r->snapshot.rend[i], r->screen.rend[i + offset], (sizeof (rend_t) * ncol));
+                r->snapshot.tlen[i] = r->screen.tlen[i + offset];
+
+                if (ncol < r->snapshot.tlen[i])
+                        fprintf(stderr, "!!!! %d > %d\n", r->snapshot.tlen[i], ncol);
+
+#else                /* old! */
+                memcpy(r->swap.text[i], r->screen.text[i + offset],
+                       /* ??*/
+                       (sizeof (text_t) * ncol));
+                memcpy(r->swap.rend[i], r->screen.rend[i + offset],
+                       (sizeof (rend_t) * ncol));
+
+                 r->swap.tlen[i] = r->screen.tlen[i + offset];
+#endif
+            }
+        }
+	break;
+
     case '6':
 	rxvt_scr_backindex(r);
 	break;
