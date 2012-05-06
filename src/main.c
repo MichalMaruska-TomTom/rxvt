@@ -879,9 +879,11 @@ rxvt_set_window_color(rxvt_t *r, int idx, const char *color)
 /* XSetWindowAttributes attr; */
 /* Cursor cursor; */
   Done:
+#if 0   /* mmc: would cause (later) flicker */
     if (idx == Color_bg && !(r->Options & Opt_transparent))
 	XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 			     r->PixColors[Color_bg]);
+#endif
 
 /* handle Color_BD, scrollbar background, etc. */
 
