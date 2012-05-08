@@ -2042,92 +2042,9 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
 /*
  * C: set the cursor character(s)
  */
-    {
-	unsigned char   setoldcursor;
-	rend_t          ccol1,	/* Cursor colour       */
-	                ccol2;	/* Cursor colour2      */
+    /* mmc: This overwrites the *desired* matrix to contain the cursor at correct position. */
+    set_cursor_characters(r,main_screen, screen, &cc1, &cc2, ocrow, &morecur);
 
-	if ((r->screen.flags & Screen_VisibleCursor) && r->TermWin.focus) {
-	    srp = &(r->screen.rend[r->screen.cur.row + r->TermWin.saveLines]
-				  [r->screen.cur.col]);
-	    *srp ^= RS_RVid;
-#ifndef NO_CURSORCOLOR
-	    cc1 = *srp & (RS_fgMask | RS_bgMask);
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor))
-		ccol1 = Color_cursor;
-	    else
-#ifdef CURSOR_COLOR_IS_RENDITION_COLOR
-		ccol1 = GET_FGCOLOR(h->rstyle);
-#else
-		ccol1 = Color_fg;
-#endif
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor))
-		ccol2 = Color_cursor2;
-	    else
-#ifdef CURSOR_COLOR_IS_RENDITION_COLOR
-		ccol2 = GET_BGCOLOR(h->rstyle);
-#else
-		ccol2 = Color_bg;
-#endif
-	    *srp = SET_FGCOLOR(*srp, ccol1);
-	    *srp = SET_BGCOLOR(*srp, ccol2);
-#endif
-#ifdef MULTICHAR_SET
-	    if (IS_MULTI1(*srp)) {
-		if (r->screen.cur.col < r->TermWin.ncol - 2
-		    && IS_MULTI2(*++srp))
-		    morecur = 1;
-	    } else if (IS_MULTI2(*srp)) {
-		if (r->screen.cur.col > 0 && IS_MULTI1(*--srp))
-		    morecur = -1;
-	    }
-	    if (morecur) {
-		*srp ^= RS_RVid;
-# ifndef NO_CURSORCOLOR
-		cc2 = *srp & (RS_fgMask | RS_bgMask);
-		*srp = SET_FGCOLOR(*srp, ccol1);
-		*srp = SET_BGCOLOR(*srp, ccol2);
-# endif
-	    }
-#endif
-	}
-
-	/* make sure no outline cursor is left around */
-	setoldcursor = 0;
-	if (ocrow != -1) {
-	    if (r->screen.cur.row + r->TermWin.view_start != ocrow
-		|| r->screen.cur.col != h->oldcursor.col) {
-		if (ocrow < r->TermWin.nrow
-		    && h->oldcursor.col < r->TermWin.ncol) {
-		    r->drawn_rend[ocrow][h->oldcursor.col] ^= (RS_RVid | RS_Uline);
-#ifdef MULTICHAR_SET
-		    if (h->oldcursormulti) {
-			col = h->oldcursor.col + h->oldcursormulti;
-			if (col < r->TermWin.ncol)
-			    r->drawn_rend[ocrow][col] ^= (RS_RVid | RS_Uline);
-		    }
-#endif
-		}
-		if (r->TermWin.focus
-		    || !(r->screen.flags & Screen_VisibleCursor))
-		    h->oldcursor.row = -1;
-		else
-		    setoldcursor = 1;
-	    }
-	} else if (!r->TermWin.focus)
-	    setoldcursor = 1;
-	if (setoldcursor) {
-	    if (r->screen.cur.row + r->TermWin.view_start >= r->TermWin.nrow)
-		h->oldcursor.row = -1;
-	    else {
-		h->oldcursor.row = r->screen.cur.row + r->TermWin.view_start;
-		h->oldcursor.col = r->screen.cur.col;
-#ifdef MULTICHAR_SET
-		h->oldcursormulti = morecur;
-#endif
-	    }
-	}
-    }
 
 #ifndef NO_SLOW_LINK_SUPPORT
 /*
