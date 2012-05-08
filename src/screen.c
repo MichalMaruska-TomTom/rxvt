@@ -2519,50 +2519,12 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     }				/* for (row....) */
 
 /*
- * G: cleanup cursor and display outline cursor in necessary
+ * G: cleanup cursor and display outline cursor if necessary
  */
-    if (r->screen.flags & Screen_VisibleCursor) {
-	if (r->TermWin.focus) {
-	    srp = &(r->screen.rend[r->screen.cur.row + r->TermWin.saveLines]
-				  [r->screen.cur.col]);
-	    *srp ^= RS_RVid;
-#ifndef NO_CURSORCOLOR
-	    *srp = (*srp & ~(RS_fgMask | RS_bgMask)) | cc1;
-#endif
-#ifdef MULTICHAR_SET
-	    if (morecur) {
-		srp += morecur;
-		*srp ^= RS_RVid;
-# ifndef NO_CURSORCOLOR
-		*srp = (*srp & ~(RS_fgMask | RS_bgMask)) | cc2;
-# endif
-	    }
-#endif
-	} else if (h->oldcursor.row >= 0) {
-#ifndef NO_CURSORCOLOR
-	    unsigned long   gcmask;	/* Graphics Context mask */
-
-	    gcmask = 0;
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor)) {
-		gcvalue.foreground = r->PixColors[Color_cursor];
-		gcmask = GCForeground;
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-		gcvalue.foreground = r->PixColors[Color_fg];
-	    }
-#endif
-	    XDrawRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,
-			   Col2Pixel(h->oldcursor.col + morecur),
-			   Row2Pixel(h->oldcursor.row),
-			   (unsigned int)(Width2Pixel(1 + (morecur ? 1 : 0))
-					  - 1),
-			   (unsigned int)(Height2Pixel(1)
-					  - r->TermWin.lineSpace - 1));
-#ifndef NO_CURSORCOLOR
-	    if (gcmask)		/* restore normal colours */
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-#endif
-	}
+    if (main_screen->flags & Screen_VisibleCursor) {
+	cleanup_cursor_and_outline(r, screen, cc1,cc2, morecur);
     }
+
 /*
  * H: cleanup selection
  */
