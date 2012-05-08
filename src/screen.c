@@ -1956,6 +1956,7 @@ rxvt_scr_printscreen(rxvt_t *r, int fullhist)
 #define IS_FONT_CHAR(X, Y)						\
     ((Y) >= (X)->min_char_or_byte2 && (Y) <= (X)->max_char_or_byte2)
 
+#include "scroll1.c"
 /* EXTPROTO */
 void
 rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
@@ -2570,23 +2571,7 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
 /*
  * I: other general cleanup
  */
-    if (clearfirst && r->TermWin.int_bwidth)
-	/* 
-	 * clear the whole screen height, note that width == 0 is treated
-	 * specially by XClearArea
-	 */
-	XClearArea(r->Xdisplay, r->TermWin.vt, 0, 0,
-		   (unsigned int)r->TermWin.int_bwidth,
-		   (unsigned int)TermWin_TotalHeight(), False);
-    if (clearlast && r->TermWin.int_bwidth)
-	/* 
-	 * clear the whole screen height, note that width == 0 is treated
-	 * specially by XClearArea
-	 */
-	XClearArea(r->Xdisplay, r->TermWin.vt,
-		   r->TermWin.width + r->TermWin.int_bwidth, 0,
-		   (unsigned int)r->TermWin.int_bwidth,
-		   (unsigned int)TermWin_TotalHeight(), False);
+    clear_borders(r, clearfirst, clearlast);
     if (refresh_type & SMOOTH_REFRESH)
 	XSync(r->Xdisplay, False);
 
