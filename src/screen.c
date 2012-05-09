@@ -243,6 +243,7 @@ rxvt_scr_reset(rxvt_t *r)
 	r->screen.flags = Screen_DefaultFlags;
 	r->screen.cur.row = r->screen.cur.col = 0;
 	r->screen.charset = 0;
+	r->h->vt_bit_gravity = StaticGravity; /* StaticGravity NorthWestGravity */
 	r->h->current_screen = PRIMARY;
 	rxvt_scr_cursor(r, SAVE);
 #if NSCREENS
