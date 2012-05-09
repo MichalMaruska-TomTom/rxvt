@@ -1264,7 +1264,9 @@ rxvt_scr_erase_screen(rxvt_t *r, int mode)
 	ren = (rend_t) ~RS_None;
     else if (GET_BASEBG(r->h->rstyle) == Color_bg) {
 	ren = DEFAULT_RSTYLE;
-	CLEAR_ROWS(row, num);
+	if (r->h->current_output == PRIMARY)
+	    /* mmc:  I could do it lazily: just mark...*/
+	    CLEAR_ROWS(row, num); /* mmc: and now we have to blank the memory! */
     } else {
 	ren = (r->h->rstyle & (RS_fgMask | RS_bgMask));
 	gcvalue.foreground = r->PixColors[GET_BGCOLOR(r->h->rstyle)];
@@ -1277,8 +1279,12 @@ rxvt_scr_erase_screen(rxvt_t *r, int mode)
 	rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
 			      (unsigned int)(row + row_offset), r->h->rstyle);
 	r->screen.tlen[row + row_offset] = 0;
-	rxvt_blank_line(r->drawn_text[row], r->drawn_rend[row],
+	if (r->h->current_output == PRIMARY){
+	  /* since i skipped the CLEAR_ROWS, i have to mark it... `RS_needs_redraw' */
+	  rxvt_blank_line(r->drawn_text[row], r->drawn_rend[row],
 			(unsigned int)r->TermWin.ncol, ren);
+	    /*| RS_needs_redraw mmc: fixme:   should i set it  `RS_needs_redraw' ? */
+	}
     }
 }
 
