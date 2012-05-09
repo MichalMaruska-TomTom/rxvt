@@ -1726,6 +1726,18 @@ enum {
     RC_COUNT
 };
 
+/*
+ * Fill explicitly, instead of relying on implicit fill by the X server (on Expose)
+ */
+void
+fill_area(Display* dpy, Drawable d, GC gc, int x, int y, int width, int height)
+{
+#if 0                           /* mmc_debug */
+    fprintf(stderr, "%s: filling %d,%d - %d,%d\n", __FUNCTION__, x, y, width, height);
+#endif
+    XFillRectangle(dpy, d, gc, x, y, width, height);
+}
+
 /* EXTPROTO */
 void
 rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
@@ -1736,6 +1748,28 @@ rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
     if (r->drawn_text == NULL)	/* sanity check */
 	return;
 
+    /* mmc: I clean the top window outside the VT window. It used to be done by implicit background,
+     * now I have to explicitely  */
+    int mw = INTERNALBORDERWIDTH;
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 mw,  TermWin_TotalHeight());
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 TermWin_TotalWidth() -mw,
+		 0,
+		 mw, TermWin_TotalHeight());
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,TermWin_TotalHeight()-mw,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
 #ifdef DEBUG_STRICT
     x = max(x, (int)r->TermWin.int_bwidth);
     x = min(x, (int)r->TermWin.width);
