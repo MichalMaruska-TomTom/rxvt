@@ -204,8 +204,9 @@ rxvt_scr_reset(rxvt_t *r)
 	r->drawn_text = rxvt_calloc(nrow, sizeof(text_t *));
 	r->swap.text = rxvt_calloc(nrow, sizeof(text_t *));
 
-	r->screen.tlen = rxvt_calloc(total_rows, sizeof(int16_t));
-	r->swap.tlen = rxvt_calloc(nrow, sizeof(int16_t));
+	/* mmc: only these */
+	r->screen.tlen = rxvt_alloc(total_rows, sizeof(int16_t));
+	r->swap.tlen = rxvt_alloc(nrow, sizeof(int16_t));
 
 	r->screen.rend = rxvt_calloc(total_rows, sizeof(rend_t *));
 	r->buf_rend = rxvt_calloc(total_rows, sizeof(rend_t *));
