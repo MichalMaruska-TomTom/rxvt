@@ -313,15 +313,26 @@ rxvt_scr_reset(rxvt_t *r)
 
 	} else if (nrow > prev_nrow) {
 	    /* add rows */
+	    int v_shift;
 	    rxvt_scr_reset_realloc(r);	/* realloc _first_ */
 
-	    k = min(r->TermWin.nscrolled, nrow - prev_nrow);
+            /* reset the new lines: why not r->swap as well? */
 	    for (p = prev_total_rows; p < total_rows; p++) {
 		r->screen.tlen[p] = 0;
 		r->screen.text[p] = NULL;
 		r->screen.rend[p] = NULL;
 	    }
-	    for (p = prev_total_rows; p < total_rows - k; p++)
+            for (p = prev_nrow; p<nrow; p++) {
+                /* mmc: So i have rows allocated only if not NULL! i have to check each row!
+		   Before using it. */
+                r->snapshot.text[p] = NULL;
+                r->snapshot.rend[p] = NULL;
+                /* fixme: r->snapshot.tlen[p] = 0; */
+            }
+            // v_shift = 0;
+	    v_shift = min(r->TermWin.nscrolled, nrow - prev_nrow);
+	    /* mmc:  why only  total_rows - v_shift ?   see below   scrolls !*/
+	    for (p = prev_total_rows; p < total_rows - v_shift; p++)
 		rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
 				      p, setrstyle);
 	    for (p = prev_nrow; p < nrow; p++) {
@@ -337,11 +348,11 @@ rxvt_scr_reset(rxvt_t *r)
 		rxvt_blank_screen_mem(r, r->snapshot.text, r->snapshot.rend,
 				      p, setrstyle);
 	    }
-	    if (k > 0) {
-		rxvt_scroll_text(r, 0, (int)nrow - 1, -k, 1);
-		r->screen.cur.row += k;
-		r->screen.s_cur.row += k;
-		r->TermWin.nscrolled -= k;
+	    if (v_shift > 0) {
+		rxvt_scroll_text(r, 0, (int)nrow - 1, -v_shift, 1);
+		r->screen.cur.row += v_shift;
+		r->screen.s_cur.row += v_shift;
+		r->TermWin.nscrolled -= v_shift; /* ok? */
 	    }
 #ifdef DEBUG_STRICT
 	    assert(r->screen.cur.row < r->TermWin.nrow);
