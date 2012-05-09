@@ -2107,6 +2107,9 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     clear_borders(r, clearfirst, clearlast);
     if (refresh_type & SMOOTH_REFRESH)
 	XSync(r->Xdisplay, False);
+    else {
+	XFlush(r->Xdisplay);
+    }
 
     h->num_scr = 0;
     h->num_scr_allow = 1;
