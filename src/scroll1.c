@@ -1,3 +1,26 @@
+/* this file contains functions extracted from the original `rxvt_scr_refresh' */
+
+#define DRAW_STRING(Func, x, y, str, len)				\
+    Func(r->Xdisplay, drawBuffer, r->TermWin.gc, (x), (y), (str), (len))
+
+#if defined (NO_BRIGHTCOLOR) || defined (VERYBOLD)
+# define MONO_BOLD(x)		((x) & (RS_Bold|RS_Blink))
+# define MONO_BOLD_FG(x, fg)	MONO_BOLD(x)
+#else
+# define MONO_BOLD(x)						\
+    (((x) & (RS_Bold | RS_fgMask)) == (RS_Bold | Color_fg))
+# define MONO_BOLD_FG(x, fg)	(((x) & RS_Bold) && (fg) == Color_fg)
+#endif
+
+#define FONT_WIDTH(X, Y)						\
+    (X)->per_char[(Y) - (X)->min_char_or_byte2].width
+#define FONT_RBEAR(X, Y)						\
+    (X)->per_char[(Y) - (X)->min_char_or_byte2].rbearing
+#define FONT_LBEAR(X, Y)						\
+    (X)->per_char[(Y) - (X)->min_char_or_byte2].lbearing
+#define IS_FONT_CHAR(X, Y)						\
+    ((Y) >= (X)->min_char_or_byte2 && (Y) <= (X)->max_char_or_byte2)
+
 
 
 #ifndef NO_PIXEL_DROPPING_AVOIDANCE

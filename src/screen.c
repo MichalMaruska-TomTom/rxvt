@@ -1935,27 +1935,6 @@ rxvt_scr_printscreen(rxvt_t *r, int fullhist)
  * r->screen.text/r->screen.rend contain what the screen will change to.
  */
 
-#define DRAW_STRING(Func, x, y, str, len)				\
-    Func(r->Xdisplay, drawBuffer, r->TermWin.gc, (x), (y), (str), (len))
-
-#if defined (NO_BRIGHTCOLOR) || defined (VERYBOLD)
-# define MONO_BOLD(x)		((x) & (RS_Bold|RS_Blink))
-# define MONO_BOLD_FG(x, fg)	MONO_BOLD(x)
-#else
-# define MONO_BOLD(x)						\
-    (((x) & (RS_Bold | RS_fgMask)) == (RS_Bold | Color_fg))
-# define MONO_BOLD_FG(x, fg)	(((x) & RS_Bold) && (fg) == Color_fg)
-#endif
-
-#define FONT_WIDTH(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].width
-#define FONT_RBEAR(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].rbearing
-#define FONT_LBEAR(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].lbearing
-#define IS_FONT_CHAR(X, Y)						\
-    ((Y) >= (X)->min_char_or_byte2 && (Y) <= (X)->max_char_or_byte2)
-
 void redraw_matrix(rxvt_t *r,screen_t *screen, int row_offset, int top_row, int bottom_row,
 		   unsigned char *clearfirst, unsigned char *clearlast, int yoffset);
 #include "scroll1.c"
