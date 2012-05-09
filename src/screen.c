@@ -1998,49 +1998,35 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     unsigned char   clearfirst,	/* first character writes before cell        */
 		    clearlast,	/* last character writes beyond cell         */
 		    must_clear,	/* use draw_string not draw_image_string     */
-#ifndef NO_BOLDFONT
-		    bfont,	/* we've changed font to bold font           */
-#endif
-		    rvid,	/* reverse video this position               */
 		    wbyte;	/* we're in multibyte                        */
     char            morecur = 0;/*                                           */
-#ifdef TTY_256COLOR
-    u_int16_t	    fore, back;	/* desired foreground/background             */
-#else
-    unsigned char   fore, back;	/* desired foreground/background             */
-#endif
-    int16_t         col, row,	/* column/row we're processing               */
-                    ocrow,	/* old cursor row                            */
-		    len, wlen;	/* text length screen/buffer                 */
-    int             i,		/* tmp                                       */
-		    row_offset;	/* basic offset in screen structure          */
+    int16_t         ocrow;	/* old cursor row                            */
+    int		    row_offset;	/* basic offset in screen structure          */
 #ifndef NO_CURSORCOLOR
     rend_t	    cc1;	/* store colours at cursor position(s)       */
 # ifdef MULTICHAR_SET
+    rend_t          cc2;	/* store colours at cursor position(s)       */
+#else /* mmc: I have to keep this... */
     rend_t          cc2;	/* store colours at cursor position(s)       */
 # endif
 #endif
     char           *buffer;	/* local copy of r->h->buffer                */
     struct rxvt_hidden *h = r->h;
+    screen_t *screen, *main_screen;
 
     if (refresh_type == NO_REFRESH || !r->TermWin.mapped)
 	return;
 
+    main_screen = &(r->screen);
+    screen = &(r->screen);
 /*
  * A: set up vars
  */
     clearfirst = clearlast = must_clear = wbyte = 0;
-#ifndef NO_BOLDFONT
-    bfont = 0;
-#endif
 
-    if (h->currmaxcol < r->TermWin.ncol) {
-	h->currmaxcol = r->TermWin.ncol;
-	h->buffer = rxvt_realloc(h->buffer, sizeof(char) * (h->currmaxcol + 1));
-    }
-    buffer = h->buffer;
     h->refresh_count = 0;
 
+    /* mmc:  This illustrates well the role of:   .`view_start'!  */
     row_offset = r->TermWin.saveLines - r->TermWin.view_start;
 /*
  * always go back to the base font - it's much safer
