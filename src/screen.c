@@ -1990,7 +1990,9 @@ rxvt_scr_printscreen(rxvt_t *r, int fullhist)
 
 void redraw_matrix(rxvt_t *r,screen_t *screen, int row_offset, int top_row, int bottom_row,
 		   unsigned char *clearfirst, unsigned char *clearlast, int yoffset);
+#include "scroll.c"
 #include "scroll1.c"
+
 /* EXTPROTO */
 void
 rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
