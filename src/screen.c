@@ -226,6 +226,9 @@ rxvt_scr_reset(rxvt_t *r)
 	r->drawn_rend = rxvt_calloc(nrow, sizeof(rend_t *));
 	r->swap.rend = rxvt_calloc(nrow, sizeof(rend_t *));
 
+	r->snapshot.rend = rxvt_calloc(nrow, sizeof(rend_t *));
+	r->snapshot.text = rxvt_calloc(nrow, sizeof(text_t *));
+	r->snapshot.tlen = rxvt_alloc(nrow, sizeof(int16_t));
 	for (p = 0; p < nrow; p++) {
 	    q = p + r->TermWin.saveLines;
 	    rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
@@ -296,7 +299,12 @@ rxvt_scr_reset(rxvt_t *r)
 #endif
 		free(r->drawn_text[p]);
 		free(r->drawn_rend[p]);
+		if (r->snapshot.text[p]){
+		    free(r->snapshot.text[p]);
+		    free(r->snapshot.rend[p]);
+		    /* no need to zero it, b/c we realloc now! */
 	    }
+	}
 	    /* we have fewer rows so fix up cursor position */
 	    MIN_IT(r->screen.cur.row, (int32_t)nrow - 1);
 	    MIN_IT(r->swap.cur.row, (int32_t)nrow - 1);
@@ -325,6 +333,8 @@ rxvt_scr_reset(rxvt_t *r)
 		rxvt_blank_screen_mem(r, r->swap.text, r->swap.rend,
 				      p, setrstyle);
 		rxvt_blank_screen_mem(r, r->drawn_text, r->drawn_rend,
+				      p, setrstyle | RS_needs_redraw);
+		rxvt_blank_screen_mem(r, r->snapshot.text, r->snapshot.rend,
 				      p, setrstyle);
 	    }
 	    if (k > 0) {
@@ -373,6 +383,18 @@ rxvt_scr_reset(rxvt_t *r)
 					&(r->swap.rend[p][prev_ncol]),
 					ncol - prev_ncol, setrstyle);
 		}
+		/* mmc: */
+		if (r->snapshot.text[p]) {
+		    r->snapshot.text[p] = rxvt_realloc(r->snapshot.text[p], ncol * sizeof(text_t));
+		    r->snapshot.rend[p] = rxvt_realloc(r->snapshot.rend[p], ncol * sizeof(rend_t));
+		    MIN_IT(r->snapshot.tlen[p], (int16_t)ncol);
+
+		    if (ncol > prev_ncol)
+			rxvt_blank_line(&(r->snapshot.text[p][prev_ncol]),
+					&(r->snapshot.rend[p][prev_ncol]),
+					ncol - prev_ncol, setrstyle);
+		}
+
 		if (ncol > prev_ncol)
 		    rxvt_blank_line(&(r->drawn_text[p][prev_ncol]),
 				    &(r->drawn_rend[p][prev_ncol]),
@@ -417,6 +439,11 @@ rxvt_scr_reset_realloc(rxvt_t *r)
     r->buf_rend    = rxvt_realloc(r->buf_rend   , total_rows * sizeof(rend_t *));
     r->drawn_rend  = rxvt_realloc(r->drawn_rend , nrow       * sizeof(rend_t *));
     r->swap.rend   = rxvt_realloc(r->swap.rend  , nrow       * sizeof(rend_t *));
+
+    /* mmc: I don't use the saveLines -> total_rows */
+    r->snapshot.text   = rxvt_realloc(r->snapshot.text, nrow   * sizeof(text_t *));
+    r->snapshot.rend   = rxvt_realloc(r->snapshot.rend  , nrow * sizeof(rend_t *));
+    r->snapshot.tlen   = rxvt_realloc(r->snapshot.tlen  , nrow * sizeof(int16_t));
 /* *INDENT-ON* */
 }
 
@@ -446,6 +473,10 @@ rxvt_scr_release(rxvt_t *r)
 	free(r->drawn_rend[i]);
 	free(r->swap.text[i]);
 	free(r->swap.rend[i]);
+	if (r->snapshot.text[i]) {
+	    free(r->snapshot.rend[i]);
+	    free(r->snapshot.text[i]);
+	}
     }
     free(r->screen.text);
     free(r->screen.tlen);
@@ -459,6 +490,13 @@ rxvt_scr_release(rxvt_t *r)
     free(r->buf_rend);
     free(r->tabs);
 
+    /* mmc: */
+    free(r->snapshot.rend);
+    free(r->snapshot.text);
+    free(r->snapshot.tlen);
+    r->snapshot.tlen = NULL;
+    r->snapshot.text = NULL;
+    r->snapshot.rend = NULL;
 /* NULL these so if anything tries to use them, we'll know about it */
     r->screen.text = r->drawn_text = r->swap.text = NULL;
     r->screen.rend = r->drawn_rend = r->swap.rend = NULL;
