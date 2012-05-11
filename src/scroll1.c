@@ -1002,3 +1002,43 @@ clear_borders(rxvt_t *r, unsigned char clearfirst, unsigned char clearlast)
 		   (unsigned int)TermWin_TotalHeight(), False);
     }
 }
+
+/* mmc: my hack to implement frozen snapshot, but keeping
+ *     rxvt_scr_refresh
+ * all primary & secondary screen processing unchanged.
+ * Improvement would be to use only the snapshot in `rxvt_scr_refresh' !
+ */
+
+/* INTPROTO */
+void
+exchange_snapshot_screen(rxvt_t *r, int offset)
+{
+#if 0
+    /* ugly hack, sorry */
+    int offset = r->TermWin.saveLines; /* (mmc:) number of lines that fit in scrollback */
+#endif
+    int i;
+    if (r->h->prev_nrow != r->TermWin.nrow)
+	{
+	    fprintf(stderr, "%s: %sbug%s: %d %d\n",__FUNCTION__,
+		    color_green, color_reset,
+		    r->h->prev_nrow, r->TermWin.nrow);
+	    abort();
+	}
+
+    for (i = r->TermWin.nrow; i--;) { /* fixme: why prev_nrow?? this is nonsense! */
+	if (!r->snapshot.rend[i])
+	    {
+		fprintf(stderr, "%s: %sbug%s: line %d in snapshot is NULL\n",__FUNCTION__,
+			color_green, color_reset, i);
+		abort();
+	    }
+
+
+	SWAP_IT(r->screen.tlen[i + offset], r->snapshot.tlen[i], int16_t);
+	SWAP_IT(r->screen.text[i + offset], r->snapshot.text[i], text_t *);
+	SWAP_IT(r->screen.rend[i + offset], r->snapshot.rend[i], rend_t *);
+    }
+
+    // CHECK_CONSISTENCY(r, __FUNCTION__,0);
+}
