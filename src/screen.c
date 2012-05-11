@@ -2074,6 +2074,13 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     /* mmc: This overwrites the *desired* matrix to contain the cursor at correct position. */
     set_cursor_characters(r,main_screen, screen, &cc1, &cc2, ocrow, &morecur);
 
+    if (r->h->check_for_scrolling) /* I don't do it always. Only when the snapshot is just switched
+				      off.*/
+	{
+	    /* fixme: Maybe do it in the caller(s)? */
+	    r->h->check_for_scrolling = 0;
+	    try_to_scroll_smoothly(r, row_offset);
+	}
 
 #ifndef NO_SLOW_LINK_SUPPORT
     refresh_type = try_to_scroll(r, refresh_type, screen, must_clear, row_offset, ocrow);
