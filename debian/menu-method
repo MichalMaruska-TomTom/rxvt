@@ -1,0 +1,27 @@
+#!/usr/bin/install-menu
+
+compat="menu-1"
+
+!include menu.h
+
+compat="menu-2"
+
+function ex($com)="{" title() "}\t" $com "\\r\n";
+function xex($com)="{" title() "}\t" $com "&\\r\n";
+
+supported;
+  x11=        xex($command);
+  text=       ex($command);
+endsupported;
+
+preoutput="#Automatically generated file. Do not edit (see /usr/doc/menu/html)\n\nSee the rxvt(1) man page for details on using this file.\n\n[menu]\n";
+postoutput="[show]\n[done]\n";
+startmenu="";
+endmenu="";
+submenutitle=$section "\n";
+genmenu="rxvt.menu";
+rootprefix="/etc/X11/";
+userprefix="/.rxvt/";
+mainmenutitle="Debian";
+rootsection="/Debian";
+treewalk="(M)"

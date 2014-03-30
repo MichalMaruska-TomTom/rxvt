@@ -1,0 +1,80 @@
+
+                                Debian RXVT
+                                README File
+
+                       Brian Mays <brian@debian.org>
+
+
+INTRODUCTION
+
+This is the Debian GNU/Linux prepackaged version of rxvt -- a VT102
+emulator for the X window system.
+
+Debian's version of rxvt now allows multiple versions of rxvt (each
+compiled with different features) to be installed on a Debian system.  The
+Debian's official rxvt package contains two versions of the rxvt binary:
+
+     rxvt-xterm  Compiled with no XPM support.  It has been configured to
+                 be a smaller, more efficient xterm substitute.
+
+     rxvt-xpm    Compiled with XPM and menu support.
+
+By default, /usr/bin/X11/rxvt will point to rxvt-xterm, however this can be
+changed by modifying the /etc/alternatives/rxvt symlink.
+
+COMPILING A CUSTOM VERSION OF RXVT AND RCLOCK
+
+Building your own custom version of rxvt is relatively simple:
+
+1)   Unpack the rxvt source and go to the root directory of the source
+     tree.
+
+2)   Edit the src/feature.h file to select the desired compile-time
+     options.  You should also configure rxvt with
+
+          ./configure --prefix /usr [ option ... ]
+
+     where a list of options can be found from configure's --help option.
+
+3)   Execute as root:
+
+          debian/rules rxvt-custom
+
+
+This will build a package, called rxvt-custom, that will contain your
+customized version of rxvt.  After installing this package, you can change
+the /etc/alternatives/rxvt symlink to point to /usr/bin/X11/rxvt-custom
+with the following command:
+
+     update-alternatives --config rxvt
+
+or reassigning the link manually with
+
+     ln -sf /usr/bin/X11/rxvt-custom /etc/alternatives/rxvt
+
+
+It is also possible to build a customized version of rclock.  The procedure
+is the same (substituting rclock everywhere for rxvt), except that the
+compile-time options are contained in rclock/feature.h.
+
+The rxvt-custom and rclock-custom rules in the debian/rules makefile use
+several make variables which can be changed on the command line:
+
+     custom_name        Names the package rxvt-<custom_name>
+
+     custom_maintainer  Changes of the Maintainer field
+
+     custom_desc        Changes of the Description field
+
+For example, a package called rxvt-big5 could be created with
+
+     debian/rules rxvt-custom custom_name=big5 \
+          custom_maintainer='Your name here' \
+          custom_desc='A version of rxvt with big fonts'
+
+
+SEE ALSO
+
+rxvt(1), The Rxvt FAQ (in /usr/share/doc/rxvt/FAQ.gz on Debian systems),
+The Debian Rxvt FAQ (in /usr/share/doc/rxvt/FAQ.Debian.gz on Debian
+systems).

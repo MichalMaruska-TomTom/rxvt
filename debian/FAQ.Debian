@@ -1,0 +1,146 @@
+
+                                Debian RXVT
+                        Frequently Asked Questions
+
+                       Brian Mays <brian@debian.org>
+
+
+This file contains the answers to some frequently asked questions about
+Debian GNU/Linux's prepackaged version of rxvt -- a VT102 emulator for the
+X window system.
+
+
+1.   Why does rxvt no longer use background pixmaps?
+
+     The rxvt command is by default a symbolic link to rxvt-xterm (rxvt-
+     debian in versions before 2.4.5-1).  This binary has been compiled to
+     be a smaller, more efficient xterm replacement.  Therefore, the more
+     exotic features, such as XPM and menu support, have been left out.
+     Debian's rxvt package also contains another version of rxvt called
+     rxvt-xpm which has all of the extra compile-time features included.
+     To make this the default rxvt--that is, the version that is run when
+     the user enters rxvt on the command line--set the symbolic link
+     /etc/alternatives/rxvt to point to /usr/bin/X11/rxvt-xpm.  This can be
+     done with the following command.  Execute as root
+
+          update-alternatives --config rxvt
+
+     or reassigning the link manually with
+
+          ln -sf /usr/bin/X11/rxvt-xpm /etc/alternatives/rxvt
+
+
+
+2.   Why are the fonts used by the new version of rxvt larger than those
+     used by the old version?
+
+     The upstream developers decided to change the default font from fixed
+     (which also is used by xterm) to 7x14.  There are several ways to
+     change the font used by rxvt.  First, it is possible to use
+     Alt-<Keypad +> and Alt-<Keypad -> keys to shift to a larger or smaller
+     font, and the font can be changed on the command line via the -fn
+     option.  Finally, it is possible to use an X resource to set the
+     default font.  To use this, add the following to your .Xresources
+     file:
+
+          Rxvt.font:     font
+
+     To ensure that xterm and rxvt use the same font, you can use the
+     following in .Xresources:
+
+          XTerm*font:    font
+
+     More options for changing rxvt's fonts are available.  See the rxvt(1)
+     manual page for more details.
+
+
+3.   Why doesn't my BackSpace key work in some applications?
+
+     Most likely this problem is caused by an incorrect rxvt terminfo
+     entry.  Upgrade to the latest version of the ncurses-base package.  If
+     the problem persists, you can manually install the correct terminfo
+     entry which is located in doc/etc/rxvt.terminfo of Debian's rxvt
+     source tree.  With this file in the current directory, execute as root
+
+          tic rxvt.terminfo
+
+     Make sure that the TERMINFO environment variable is not set when you
+     do this.
+
+
+4.   Rxvt uses too many colors for my monitor.  How do I disable the extra
+     colors?
+
+     Rxvt only uses 16 colors (not including the colors used by a
+     background pixmap), which is not very many.  However, all of the
+     colors are reconfigurable using run time options.  For example, to
+     keep rxvt from using dark grey (grey25) for bold text, running it with
+
+          rxvt --colorBD 0
+
+     This tells rxvt to use color 0 (black) for bold characters.  To enable
+     this permanently, place the following in your .Xresources file:
+
+          Rxvt.colorBD:  0
+
+     More options for changing rxvt's colors are available.  See the
+     rxvt(1) manual page for more details.
+
+
+5.   Rxvt doesn't start.  Instead it returns the following error message:
+
+          rxvt: can't open slave tty (null)
+
+     What is wrong?
+
+     As of version 2.6.0, rxvt uses the new Unix98 pseudo-ttys.  Therefore,
+     ensure that the "/dev/pts" directory is mounted and has the correct
+     file permissions.
+
+
+6.   Why doesn't rxvt read the ".Xdefaults" file?
+
+     Rxvt was compiled without internal Xresources support.  Therefore, it
+     uses the X server resource database like most other X clients.  To set
+     rxvt resources, either add them to your "~/.Xresources" file, which is
+     read when starting your X session, or use the xrdb(1) program.
+
+
+7.   I upgraded from version 2.4.5 (or earlier) to 2.6.1 (or later).  Why
+     have my window tiles and icon names have changed?
+
+     The most common source of this problem is using the "-name" command
+     line option to set the title and icon name while also using the "-e"
+     command line option.  The bahavior of rxvt has changed.  The "-e"
+     command line option now sets the window title and icon name to be the
+     basename of the program being executed if neither "-title" ("-T") nor
+     "-n" are given on the command line.  Therefore, using "-name" to do
+     this no longer works.  Instead, use the rxvt "-title" and "-n"
+     options.
+
+
+8.   How do I get special keys to work with bash in an rxvt window?
+
+     The easiest way to accomplish this is to edit the ".inputrc"
+     configuration file.  See bash(1) for the format of this file.  Each
+     sequence in the Rxvt Technical Reference (the "rxvtRef" files in the
+     package documentation) can be bound to a particular action by adding
+     lines to this file of the form
+
+          "keyseq": function-name or macro
+
+     The escape key should be represented in keyseq by "\e".  For example,
+     the following lines could be used to bind the arrow keys to move the
+     cursor one word to the right or left when combined with the control
+     key:
+
+          "\Oc": forward-word
+          "\Od": backward-word
+
+
+
+More help with Debian's version of rxvt is available on the debian-users
+mailing list (at "debian-users@lists.debian.org").  If you have any
+suggestions for improving this document or if you have any additional
+questions that you think should be included here, please send them to
+"rxvt@packages.debian.org".

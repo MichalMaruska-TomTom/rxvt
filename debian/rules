@@ -70,26 +70,23 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 
 binary-indep: build install
 
+binary-arch: path := tmp
 binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs
 	dh_installdocs
 	dh_install
-	chmod 0644 debian/rxvt-beta/usr/share/doc/rxvt-beta/examples/*
-	mv debian/rxvt-beta/usr/share/doc/rxvt-beta/rxvt-changes.txt \
-           debian/rxvt-beta/usr/share/doc/rxvt-beta/rxvt-changelog
+#	chmod 0644 debian/$(path)/usr/share/doc/rxvt-beta/examples/*
+#	mv debian/$(path)/usr/share/doc/rxvt-beta/rxvt-changes.txt \
+#           debian/$(path)/usr/share/doc/rxvt-beta/rxvt-changelog
 	dh_installmenu
-	mv debian/rxvt-beta/etc/menu-methods/rxvt-beta debian/rxvt-beta/etc/menu-methods/rxvt
-	chmod 0755 debian/rxvt-beta/etc/menu-methods/rxvt
-	mv debian/rxvt-beta/usr/share/menu/rxvt-beta debian/rxvt-beta/usr/share/menu/rxvt
 	dh_installman
-	cp -f doc/rxvt.tbl debian/rxvt-beta/usr/share/man/man1/rxvt.1
 	dh_link
 #	dh_strip
 	dh_compress

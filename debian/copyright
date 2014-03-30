@@ -1,0 +1,32 @@
+This Debian package was originally put together by Andrew Howell
+<andrew@it.com.au>. It is currently maintained by Jan Christoph Nordholz
+<hesso@pool.math.tu-berlin.de>.
+
+rxvt was downloaded from http://sf.net/projects/rxvt.
+
+License for rxvt:
+
+	Copyright (C) 1992	John Bovey, University of Canterbury
+	Copyright (C) 1994	Robert Nation <nation@rocket.sanders.lockheed.com>
+	Copyright (C) 1995	Garrett D'Amore <garrett@netcom.com>
+	Copyright (C) 1997	mj olesen <olesen@me.QueensU.CA>
+	Copyright (C) 1997-1998	Oezguer Kesim <kesim@math.fu-berlin.de>
+	Copyright (C) 1998	Geoff Wing <gcw@pobox.com>
+
+License for rclock:
+
+	Copyright (C) 1992-1993	Robert Nation <nation@rocket.sanders.lockheed.com>
+	Copyright (C) 1997-1998	Oezguer Kesim <kesim@math.fu-berlin.de>
+
+	Both programs are free software; you can redistribute and/or modify
+	them under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	These programs are distributed in the hope that they will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in "/usr/share/common-licenses/GPL".
