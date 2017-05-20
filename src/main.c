@@ -138,7 +138,7 @@ rxvt_Child_signal(int sig __attribute__((unused)))
 
     r = rxvt_get_r();
     if (pid == r->h->cmd_pid)
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 
     errno = save_errno;
     signal(SIGCHLD, rxvt_Child_signal);
