@@ -305,6 +305,9 @@ typedef struct rxvt_vars {
     char           *tabs;	/* per location: 1 == tab-stop               */
     screen_t        screen;
     screen_t        swap;
+    screen_t        snapshot;   /* mmc: when needed, we detach output from working (being written to)
+                                 * buffer(s): So, we display (into X server) from snapshot, but
+                                 * the subprocess works on screen/swap. */
     selection_t     selection;
     sstyle_t        selection_style;
     ENC_METHOD      encoding_method;
