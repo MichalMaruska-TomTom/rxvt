@@ -407,6 +407,8 @@ enum {
 #define XTerm_restoreBG		49	/* change default bg color */
 #define XTerm_dumpscreen	55	/* dump scrollback and all of screen */
 #define XTerm_set_selection	56	/* set the X selection to Pt */
+#define XTerm_set_gravity	57	/* set the (text) VT window window-gravity to
+					   Pt (NW, SE, STatic) */
 
 /* Words starting with `Color_' are colours.  Others are counts */
 /*
