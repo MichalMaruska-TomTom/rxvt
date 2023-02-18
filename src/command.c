@@ -667,7 +667,7 @@ rxvt_cmd_getc(rxvt_t *r)
     int    tryX = 1;
 
     if (h->cmdbuf_ptr < h->cmdbuf_endp)	/* characters already read in */
-        return *h->cmdbuf_ptr++;
+	return *h->cmdbuf_ptr++;
 
     for (;;) {
     /* loop until we can return something */
