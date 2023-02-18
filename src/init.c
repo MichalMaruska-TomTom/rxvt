@@ -1171,6 +1171,15 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					0,
 					r->PixColors[Color_fg],
 					r->PixColors[Color_bg]);
+    {
+	XSetWindowAttributes attributes = {0};
+	attributes.background_pixmap = None;
+
+
+	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+				CWBackPixmap | CWBitGravity | CWWinGravity,
+				&attributes);
+    }
 #ifdef DEBUG_X
     XStoreName(r->Xdisplay, r->TermWin.vt, "vt window");
 #endif
