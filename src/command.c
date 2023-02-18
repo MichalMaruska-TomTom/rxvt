@@ -681,6 +681,7 @@ rxvt_cmd_getc(rxvt_t *r)
 	    XEvent          xev;
 
 	    XNextEvent(r->Xdisplay, &xev);
+	    // fprintf(stderr, "%s%d%s\n", color_red, xev.xany.window, color_reset);
 #ifdef USE_XIM
 	    if (!XFilterEvent(&xev, xev.xany.window))
 		rxvt_process_x_event(r, &xev);
