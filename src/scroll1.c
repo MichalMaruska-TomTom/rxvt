@@ -122,6 +122,16 @@ try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
     struct rxvt_hidden *h = r->h;
     const int i = h->num_scr;		  /* mmc: ->num_scr  is the scrolling amount? */;
 
+    /* mmc: */
+    if (i)
+	refresh_type = FAST_REFRESH;
+
+    D_SCREEN((stderr, "rxvt_scr_refresh(): scroll %d, refresh: %s (%s) %s",
+	      i,(refresh_type == FAST_REFRESH)?"FAST_REFRESH":
+	      (refresh_type == SLOW_REFRESH)?"SLOW_REFRESH":"DUNNO",
+	      (h->num_scr_allow?"":"not allow"),
+	      (must_clear)?"MUST_CLEAR":""));
+
     /* mmc: This is for scrolling! */
     if (refresh_type == FAST_REFRESH && h->num_scr_allow && i
 	/* mmc:	 FAST_REFRESH  REFRESH_BOUNDS */
