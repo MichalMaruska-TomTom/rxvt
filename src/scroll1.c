@@ -1,3 +1,616 @@
+
+
+#ifndef NO_PIXEL_DROPPING_AVOIDANCE
+  /*
+   * E1: pixel dropping avoidance.  Do this before the main refresh on the line.
+   *     Require a refresh where pixels may have been dropped into our
+   *     area by a neighbour character which has now changed
+   *     TODO: this could be integrated into E2 but might be too messy
+   * The result is .... modifying drawn_text so that it results changed, surely,
+   * in the following step.
+   */
+
+inline void
+mark_damaged_chars_from_left(rxvt_t *r,
+			     text_t *stp,rend_t *srp,
+			     text_t *dtp, rend_t *drp,
+			     unsigned char *clearfirst, unsigned char *clearlast)
+{
+    int	  j;
+    unsigned char	  clear_next = 0;
+    const XFontStruct *wf;	/* which font are we in */
+    int16_t	  col;
+
+# ifdef NO_BOLDFONT
+    wf = r->TermWin.font;
+# endif
+
+    for (col = 0; col < r->TermWin.ncol; col++) {
+	unsigned char   is_font_char, is_same_char;
+	text_t	    t;
+
+	t = dtp[col];
+	is_same_char = (t == stp[col] && drp[col] == srp[col]);
+
+	if (!clear_next
+	    && (is_same_char
+		|| t == 0	/* screen cleared elsewhere */
+		|| t == ' ')
+	    ) {
+	    continue;
+	}
+	if (clear_next) {	/* previous char caused change here */
+	    clear_next = 0;
+	    /* mmc: we simulate, as if .... */
+	    /* Drawn text is Zeroed. todo: set `RS_needs_redraw' instead! */
+	    dtp[col] = 0;
+	    if (is_same_char)	/* don't cascade into next char */
+		continue;
+	}
+	j = MONO_BOLD(drp[col]) ? 1 : 0;
+# ifndef NO_BOLDFONT
+	wf = (j && r->TermWin.boldFont) ? r->TermWin.boldFont
+	    : r->TermWin.font;
+# endif
+	/*
+	 * TODO: consider if anything special needs to happen with:
+	 * #if defined(MULTICHAR_SET) && ! defined(NO_BOLDOVERSTRIKE_MULTI)
+	 */
+	is_font_char = (wf->per_char && IS_FONT_CHAR(wf, t)) ? 1 : 0;
+	if (!is_font_char || FONT_LBEAR(wf, t) < 0) {
+	    if (col == 0)
+		*clearfirst = 1;
+	    else
+		dtp[col - 1] = 0;
+	}
+	if (!is_font_char
+	    || (FONT_WIDTH(wf, t) < (FONT_RBEAR(wf, t) + j))) {
+	    if (col == r->TermWin.ncol - 1)
+		*clearlast = 1;
+	    else
+		clear_next = 1;
+	}
+    }
+}
+#endif /* NO_PIXEL_DROPPING_AVOIDANCE */
+
+/* return TRUE if no redraw needed.
+ * can increase *ret_col */
+inline int
+cell_stays_unchanged(rend_t rend, int16_t* ret_col,
+		     text_t* stp, text_t* dtp, rend_t* drp)
+{
+    int col = *ret_col;
+
+    /* fixme: here bug?	  srp is 0!*/
+    /* screen rendition (target rendtion) */
+    if (stp[col] == dtp[col]	/* same characters */
+	&& (rend == drp[col]	/* Either rendition the same or	 */
+	    || (stp[col] == ' '	/* (both) space w/ no background change*/
+		&& GET_BGATTR(rend) == GET_BGATTR(drp[col])))){
+	if (!IS_MULTI1(rend))
+	    return TRUE;   /* This displayed rectangle needs no change!	 Hurra! */
+#ifdef MULTICHAR_SET
+	else {	/* first byte is Kanji so compare second bytes */
+	    if (stp[col + 1] == dtp[col + 1]){
+		/* assume no corrupt characters on the screen */
+		(*ret_col)++;
+		return TRUE;
+	    }
+	}
+#endif
+    }
+    return FALSE;
+}
+
+typedef int(*draw_function) ();
+
+// determines the function to draw the glyphs.
+inline void
+find_longest_string_to_draw(rxvt_t *r,
+			    rend_t	  rend,
+			    unsigned char fprop,
+			    int16_t	  *ret_len,
+			    int16_t	  *wlen,
+			    char	  *buffer,
+			    int16_t	  *ret_col,
+			    unsigned char *fontdiff,
+			    text_t* stp,
+			    rend_t* srp,
+			    text_t* dtp,
+			    rend_t* drp,
+			    draw_function *draw_string,
+			    draw_function *draw_image_string,
+			    unsigned char *wbyte,
+			    unsigned char must_clear)
+{
+    struct rxvt_hidden *h = r->h;
+    int col = *ret_col;
+    int len = *ret_len;
+
+#ifdef MULTICHAR_SET
+    if (IS_MULTI1(rend)
+	&& col < r->TermWin.ncol - 1 && IS_MULTI2(srp[col + 1])){
+	if (!*wbyte && r->TermWin.mfont){
+	    *wbyte = 1;
+	    XSetFont(r->Xdisplay, r->TermWin.gc,
+		     r->TermWin.mfont->fid);
+	    *fontdiff = (r->TermWin.propfont & PROPFONT_MULTI);
+
+	    *draw_string = XDrawString16;
+	    *draw_image_string = XDrawImageString16;
+	}
+	if (r->TermWin.mfont == NULL){
+	    buffer[0] = buffer[1] = ' ';
+	    len = 2;
+	    col++;
+	} else {
+	    /* double stepping - we're in multibyte font mode */
+	    for (; ++col < r->TermWin.ncol;) {
+		/* XXX: could check sanity on 2nd byte */
+		dtp[col] = stp[col];
+		drp[col] = srp[col];
+		buffer[len++] = stp[col];
+		col++;
+		if (fprop)	/* proportional multibyte font mode */
+		    break;
+		if ((col == r->TermWin.ncol) || (srp[col] != rend))
+		    break;
+		if ((stp[col] == dtp[col])
+		    && (srp[col] == drp[col])
+		    && (stp[col + 1] == dtp[col + 1]))
+		    break;
+		if (len == h->currmaxcol)
+		    break;
+		dtp[col] = stp[col];
+		drp[col] = srp[col];
+		buffer[len++] = stp[col];
+	    }
+	    col--;
+	}
+	if (buffer[0] & 0x80)
+	  (h->multichar_decode)((unsigned char*) buffer, len); /* fixme! */
+	*wlen = len / 2;
+    } else {
+	if (rend & RS_multi1) {
+	    /* corrupt character - you're outta there */
+	    rend &= ~RS_multiMask;
+	    drp[col] = rend;	/* TODO check: may also want */
+	    dtp[col] = ' ';	/* to poke into stp/srp	     */
+	    buffer[0] = ' ';
+	}
+	if (*wbyte) {
+	    *wbyte = 0;
+	    XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.font->fid);
+	    *draw_string = XDrawString;
+	    *draw_image_string = XDrawImageString;
+	}
+#endif /* MULTICHAR_SET */
+	{
+	    /* mmc: i do assume, that i don't use proportional fonts! */
+	    if (!fprop) {
+		/* aaaabbb
+		 * acaacxx  so at c we detect first change.
+		 *    ^ here our patience runs off.
+		 * then we walk and as much as ....even when identical
+		 * but only half at most. */
+		int trailing_redundants;  /* # of redundant/useless  */
+		/* single stepping - `normal' mode */
+		for (trailing_redundants = 0; ++col < r->TermWin.ncol - 1;){
+		    /* if the font changes */
+		    if (rend != srp[col])
+			break;
+		    /* mmc: do we reprocess the starting [0] ?? */
+		    buffer[len++] = stp[col];
+
+		    /* if even this is different: */
+		    if ((stp[col] != dtp[col]) || (srp[col] != drp[col])) {
+			/* fixme: must_clear is FALSE! */
+			if (must_clear && (trailing_redundants++ > (len / 2)))
+			    break;
+
+			/* mmc: Soft Rendering:	 moving from Buffer to Display (buffer) */
+			dtp[col] = stp[col];
+			drp[col] = srp[col];
+			/* reset i */
+			trailing_redundants = 0;
+		    } else if (must_clear || (stp[col] != ' ' && ++trailing_redundants > 32))
+			break;
+		}
+
+		col--;	/* went one too far.  move back */
+		len -= trailing_redundants; /* dump any matching trailing chars */
+	    }
+	    *wlen = len;
+	}
+	buffer[len] = '\0';
+#ifdef MULTICHAR_SET
+    }
+#endif
+
+    *ret_col = col;
+    *ret_len = len;
+}
+
+inline void
+rewrite_buffer(char buffer[], rend_t rend, int16_t len)
+{
+    switch (rend & RS_fontMask) {
+	case RS_acsFont:
+	{
+	    int i;
+	    for (i = 0; i < len; i++)
+		if (buffer[i] == 0x5f)
+		    buffer[i] = 0x7f;
+		else if (buffer[i] > 0x5f && buffer[i] < 0x7f)
+		    buffer[i] -= 0x5f;
+	    break;
+	}
+	case RS_ukFont:
+	{
+	    int i;
+	    for (i = 0; i < len; i++)
+		if (buffer[i] == '#')
+		    buffer[i] = 0x1e;	/* pound sign */
+	    break;
+	}
+    }
+}
+
+/* given the attributes of the cell + global ones -> find the combination?
+   Also -- side effect --- sets the X GC of the @r@ */
+inline void
+determine_attributes(const rxvt_t *r,
+		     rend_t	     rend,
+#ifdef TTY_256COLOR
+		     u_int16_t	    fore,
+		     u_int16_t	    back,	/* desired foreground/background	     */
+#else
+		     unsigned char   fore,
+		     unsigned char   back,	/* desired foreground/background	     */
+#endif
+		     unsigned char  *bfont,
+		     unsigned long   *ret_gcmask,	 /* Graphics Context mask		 */
+		     XGCValues	     *gcvalue,
+		     unsigned char wbyte,
+		     unsigned char   *fontdiff
+		     )
+{
+    unsigned long   gcmask;
+    unsigned char rvid;	/* reverse video this position */
+    struct rxvt_hidden *h = r->h;
+
+    rvid = (rend & RS_RVid) ? 1 : 0;
+#ifdef OPTION_HC
+    if (!rvid && (rend & RS_Blink)) {
+	if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_HC)
+	    && r->PixColors[fore] != r->PixColors[Color_HC]
+	    && r->PixColors[back] != r->PixColors[Color_HC])
+	    back = Color_HC;
+	else
+	    rvid = !rvid;	/* fall back */
+    }
+
+#endif
+    if (rvid) {
+#ifdef TTY_256COLOR
+	SWAP_IT(fore, back, u_int16_t);
+#else
+	SWAP_IT(fore, back, unsigned char);
+#endif
+#ifndef NO_BOLD_UNDERLINE_REVERSE
+	if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_RV)
+	    && r->PixColors[fore] != r->PixColors[Color_RV])
+	    back = Color_RV;
+#endif
+    }
+    gcmask = 0;
+    if (back != Color_bg) {
+	gcvalue->background = r->PixColors[back];
+	gcmask = GCBackground;
+    }
+    if (fore != Color_fg) {
+	gcvalue->foreground = r->PixColors[fore];
+	gcmask |= GCForeground;
+    }
+#ifndef NO_BOLD_UNDERLINE_REVERSE
+    else if (rend & RS_Bold) {
+	if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_BD)
+	    && r->PixColors[fore] != r->PixColors[Color_BD]
+	    && r->PixColors[back] != r->PixColors[Color_BD]) {
+	    gcvalue->foreground = r->PixColors[Color_BD];
+	    gcmask |= GCForeground;
+# ifndef VERYBOLD
+	    rend &= ~RS_Bold;	/* we've taken care of it */
+# endif
+	}
+    } else if (rend & RS_Uline) {
+	if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_UL)
+	    && r->PixColors[fore] != r->PixColors[Color_UL]
+	    && r->PixColors[back] != r->PixColors[Color_UL]) {
+	    gcvalue->foreground = r->PixColors[Color_UL];
+	    gcmask |= GCForeground;
+	    rend &= ~RS_Uline;	/* we've taken care of it */
+	}
+    }
+#endif
+    if (gcmask)
+	XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, gcvalue);
+#ifndef NO_BOLDFONT
+    if (!wbyte && MONO_BOLD_FG(rend, fore)
+	&& r->TermWin.boldFont != NULL) {
+	*bfont = 1;
+	XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.boldFont->fid);
+	*fontdiff = (r->TermWin.propfont & PROPFONT_BOLD);
+	rend &= ~RS_Bold;	/* we've taken care of it */
+    } else if (*bfont) {
+	*bfont = 0;
+	XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.font->fid);
+    }
+#endif
+
+    *ret_gcmask = gcmask;
+}
+
+
+/*
+ * Actually do the drawing of the string here
+ */
+inline void
+do_draw(rxvt_t *r, rend_t rend,
+	char buffer[], int16_t len, int16_t wlen,
+	int xpixel, int ypixel, int ypixelc,
+#ifdef TTY_256COLOR
+	u_int16_t	fore,
+	u_int16_t	back,	/* desired foreground/background	     */
+#else
+	unsigned char	fore,
+	unsigned char	back,	/* desired foreground/background	     */
+#endif
+	unsigned char wbyte, unsigned char must_clear,
+	XGCValues	*gcvalue,
+	unsigned long	gcmask,
+	unsigned char	fontdiff,
+	unsigned char	fprop,
+	draw_function  draw_string,
+	draw_function  draw_image_string
+	)
+{
+    /* draw_string */
+
+    /* mmc: what is needed from previous computation:
+     *
+     *	 back ?
+     *	 must_clear ?
+     *	 ---------
+     *	 fprop	      proportional font used
+     *	 fontdiff     current font size != base font size
+     * */
+    if (back == Color_bg && must_clear) {
+	/* mmc: we can simply XClearRectangle and then draw the string (foreground) */
+
+	D_SCREEN((stderr, "%s CLEAR_CHARS: (%d, %d -- %d)\n",
+		  __FUNCTION__,xpixel, ypixelc, len));
+
+	CLEAR_CHARS(xpixel, ypixelc, len);
+	int i;
+	for (i = 0; i < len; i++)	/* don't draw empty strings */
+	    if (buffer[i] != ' ') {
+		DRAW_STRING(draw_string, xpixel, ypixel, buffer, wlen);
+		break;
+	    }
+    } else if (fprop || fontdiff) {	/* single glyph writing */
+	unsigned long	gctmp;
+
+	gctmp = gcvalue->foreground;
+	gcvalue->foreground = gcvalue->background;
+	XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, gcvalue);
+
+	D_SCREEN((stderr, "%s XFillRectangle: (%d, %d -- %d, %d)\n",
+		  __FUNCTION__,
+		  xpixel, ypixelc,
+		  Width2Pixel(len), (Height2Pixel(1) - r->TermWin.lineSpace)));
+
+	/* |XX....X|  len characters, (on 1 line)
+	 *  fixme:
+	 *  mmc: we don't use XClearAres (CLEAR_CHARS) b/c that would put the (original) Window BG
+	 *  colors.  Here we _probably_ need a different color background! (selected by ANSII
+	 *  color sequence) */
+	XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,
+		       xpixel, ypixelc, (unsigned int)Width2Pixel(len),
+		       (unsigned int)(Height2Pixel(1)
+				      - r->TermWin.lineSpace));
+	/* mmc:	 TermWin.lineSpace   is the space between 2 lines? */
+	gcvalue->foreground = gctmp;
+	XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, gcvalue);
+	DRAW_STRING(draw_string, xpixel, ypixel, buffer, wlen);
+	/* mmc: note where we draw! ypixel ...font line
+	 * and ypixelc is bottom of the cell! */
+    } else {
+	/* D_SCREEN((stderr, "%s just DRAW_STRING:", __FUNCTION__));*/
+	DRAW_STRING(draw_image_string, xpixel, ypixel, buffer, wlen);
+    }
+#ifndef NO_BOLDOVERSTRIKE
+# ifdef NO_BOLDOVERSTRIKE_MULTI
+    if (!wbyte)
+# endif
+	if (MONO_BOLD_FG(rend, fore))
+	    DRAW_STRING(draw_string, xpixel + 1, ypixel, buffer, wlen);
+#endif
+
+    /* Underlining! */
+    if ((rend & RS_Uline) && (r->TermWin.font->descent > 1))
+	XDrawLine(r->Xdisplay, drawBuffer, r->TermWin.gc,
+		  xpixel, ypixel + 1,
+		  xpixel + Width2Pixel(len) - 1, ypixel + 1);
+    /* restore normal colours */
+    if (gcmask) {
+	gcvalue->foreground = r->PixColors[Color_fg];
+	gcvalue->background = r->PixColors[Color_bg];
+	XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, gcvalue);
+    }
+}
+
+/**
+   Comparing 2 matrics. What should be and what is on the window surface.
+   SCREEN(desired) is the active one of the R. Either PRIMARY or SECONDARY!
+
+   screen+row_offset	   r->drawn_text
+   xxx
+   yyy - row_offset   vs   jjjjj
+   zzz			   kkkkk
+   versus  limited to top_row .... bottom_row
+   (exclusive!)
+
+   mmc: todo: [02 nov 06] accept another parameter: `yoffset' so that we can draw in
+   micro-scrolled window!
+*/
+
+/* INTPROTO */
+void
+redraw_matrix(rxvt_t *r,screen_t *screen, int row_offset, int top_row, int bottom_row,
+	      unsigned char *clearfirst, unsigned char *clearlast, int yoffset)
+{
+    int16_t	    col, row;	/* column/row we're processing		     */
+    text_t	   *dtp, *stp;	/* drawn-text-pointer, screen-text-pointer   */
+    rend_t	   *drp, *srp;	/* drawn-rend-pointer, screen-rend-pointer   */
+    int16_t	    len, wlen;	/* text length screen/buffer		     */
+    char	   *buffer;	/* local copy of r->h->buffer		     */
+    unsigned char    must_clear,/* must cover/repaint the whole rectangle, i.e.
+				   use draw_string not draw_image_string     */
+#ifndef NO_BOLDFONT
+		    bfont = 0,	/* we've changed font to bold font	     */
+#endif
+		    wbyte;	/* we're in multibyte			     */
+
+/* mmc: todo: have a special type! and avoid #ifdef! */
+#ifdef TTY_256COLOR
+    u_int16_t	    fore, back;	/* desired foreground/background	     */
+#else
+    unsigned char   fore, back;	/* desired foreground/background	     */
+#endif
+    struct rxvt_hidden *h = r->h;
+    int		     total_drawn = 0;
+    /* mmc: I might replace these */
+    int		    (*draw_string) () = XDrawString;
+    int		    (*draw_image_string) () = XDrawImageString;
+
+    XGCValues	    gcvalue;	/* Graphics Context values		     */
+    /* set base colours to avoid check in "single glyph writing" below */
+    gcvalue.foreground = r->PixColors[Color_fg];
+    gcvalue.background = r->PixColors[Color_bg];
+
+    /* ->buffer is used only for redrawing. */
+    must_clear = wbyte = 0;
+    if (h->currmaxcol < r->TermWin.ncol) {
+	h->currmaxcol = r->TermWin.ncol;
+	h->buffer = rxvt_realloc(h->buffer, sizeof(char) * (h->currmaxcol + 1));
+    }
+    buffer = h->buffer;
+
+    if (r->TermWin.saveLines + r->TermWin.nrow < bottom_row)
+	fprintf(stderr, "%s: problem here!\n", __FUNCTION__);
+
+    /*
+     * E: main pass across every character
+     */
+    for (row = top_row; row < bottom_row; row++) { /* fixme:  should take <= bottom_row ? */
+	int		xpixel,	 /* x offset for start of drawing (font) */
+			ypixel,	 /* y offset for start of drawing (font) */
+			ypixelc; /* y offset for top of drawing		 */
+	unsigned long	gcmask;	 /* Graphics Context mask		 */
+
+	/* fixme: these are out of bound! */
+	stp = screen->text[row + row_offset];
+	srp = screen->rend[row + row_offset];
+	dtp = r->drawn_text[row];
+	drp = r->drawn_rend[row];
+
+	/* E1: */
+#ifndef NO_PIXEL_DROPPING_AVOIDANCE
+	mark_damaged_chars_from_left(r, stp, srp, dtp, drp,
+				     clearfirst, clearlast);
+#endif /* NO_PIXEL_DROPPING_AVOIDANCE */
+
+	/*
+	 * E2: OK, now the real pass
+	 */
+	ypixelc = (int)Row2Pixel(row) + yoffset;
+	ypixel = ypixelc + r->TermWin.font->ascent;
+
+	for (col = 0; col < r->TermWin.ncol; col++){
+	    unsigned char   fontdiff,/* current font size != base font size */
+			    fprop;   /* proportional font used		    */
+	    rend_t	    rend;    /* rendition value			    */
+
+	    rend = srp[col];
+	    /* compare new text with old - if exactly the same then continue */
+	    if (cell_stays_unchanged(rend, &col,
+				     stp, dtp, drp))
+		continue;
+
+	    /* redraw one or more characters */
+	    fontdiff = 0;
+	    len = 0;
+
+	    /* mmc:   Here we update the  drawn Buffer (soft screen) !	*/
+	    buffer[len++] = dtp[col] = stp[col]; /* mmc: we start to construct the string to be drawn */
+	    drp[col] = rend;	/* and update the drawn (buffer). */
+	    xpixel = Col2Pixel(col);
+
+	    /*
+	     * Find out the longest string we can write out at once
+	     */
+#ifndef NO_BOLDFONT
+	    if (MONO_BOLD(rend) && r->TermWin.boldFont != NULL)
+		fprop = (r->TermWin.propfont & PROPFONT_BOLD);
+	    else
+#endif
+		fprop = (r->TermWin.propfont & PROPFONT_NORMAL);
+
+	    find_longest_string_to_draw(r, rend,
+					fprop, &len, &wlen, buffer,
+					&col, &fontdiff,
+					stp,
+					srp,
+					dtp,
+					drp,
+					&draw_string,
+					&draw_image_string,
+					&wbyte,
+					must_clear);
+	    total_drawn += len;
+	    /* so in buffer[] we have the text to print. */
+
+	    /*
+	     * Determine the attributes for the string
+	     */
+	    fore = GET_FGCOLOR(rend);
+	    back = GET_BGCOLOR(rend);
+	    rend = GET_ATTR(rend);
+
+	    rewrite_buffer(buffer, rend, len);
+
+	    determine_attributes(r, rend,
+				 fore, back,
+				 &bfont, &gcmask,
+				 &gcvalue,wbyte, &fontdiff);
+	    do_draw(r, rend,
+		    buffer, len, wlen,
+		    xpixel, ypixel, ypixelc,
+		    back, fore,
+		    wbyte, must_clear, &gcvalue, gcmask,
+		    fontdiff, fprop,
+
+		    draw_string, draw_image_string);
+	}			/* for (col....) */
+    }				/* for (row....) */
+
+    if (r->h->debug & 1)
+	fprintf(stderr, "total %d\n", total_drawn);
+}
+
+
 /* Sets in the desired `screen' the rendition of the cursor (if the X window is focused).
  * Also, sets   h->oldcursor */
 
