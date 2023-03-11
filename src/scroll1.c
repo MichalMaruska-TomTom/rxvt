@@ -105,6 +105,117 @@ set_cursor_characters(rxvt_t *r,screen_t *main_screen, screen_t *screen,
     }
 }
 
+#ifndef NO_SLOW_LINK_SUPPORT
+
+/* INTPROTO */
+unsigned char
+try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
+	      unsigned char must_clear, int row_offset, int16_t ocrow)
+{
+    /*
+     * D: CopyArea pass - very useful for slower links
+     *	  This has been deliberately kept simple.
+     */
+
+    /* adding: */
+    struct rxvt_hidden *h = r->h;
+    const int i = h->num_scr;		  /* mmc: ->num_scr  is the scrolling amount? */;
+
+    if (refresh_type == FAST_REFRESH && h->num_scr_allow && i
+	&& abs(i) < r->TermWin.nrow && !must_clear) {
+
+	int16_t		len, wlen;	/* text length screen/buffer		     */
+	int16_t		col, row;	/* column/row we're processing		     */
+
+	text_t	       *dtp, *stp;	/* drawn-text-pointer, screen-text-pointer   */
+	rend_t	       *drp, *srp;	/* drawn-rend-pointer, screen-rend-pointer   */
+
+
+	int16_t		nits;
+	int		j;
+	rend_t	       *drp2;
+	text_t	       *dtp2;
+	j = r->TermWin.nrow;	/* ?? */
+	wlen = len = -1;
+
+	/* i is the direction? */
+	row = i > 0 ? 0 : j - 1;
+
+	for (; j-- >= 0; row += (i > 0 ? 1 : -1)) {
+
+	    /* mmc:  the row will be scrolled into visible area?     todo: what is ocrow ? */
+	    if (row + i >= 0 && row + i < r->TermWin.nrow && row + i != ocrow) {
+
+		/* mmc: `screen'  TEXT (strings) and  RENDERED (colors & attributes ??)	 */
+		stp = screen->text[row + row_offset];
+		/* row_offset is for displaying	  `scroll_back': history! */
+		srp = screen->rend[row + row_offset]; /* so, compare it with DTP, not DTP2 */
+
+
+		/* `Drawn'    from To:	*/
+		dtp = r->drawn_text[row];
+		dtp2 = r->drawn_text[row + i];
+
+		drp = r->drawn_rend[row];
+		drp2 = r->drawn_rend[row + i];
+
+
+		/*  */
+		for (nits = 0, col = r->TermWin.ncol; col--; )
+
+		    /* we compare the buffer, with the 2 displayed rows. Which one is more
+		       similar?*/
+
+		    /* Change between display, and buffer: */
+		    /* where it would be if we moved */
+		    if (stp[col] != dtp2[col] || srp[col] != drp2[col])
+			nits--;
+
+		    /* Where it is now: */
+		    else if (stp[col] != dtp[col] || srp[col] != drp[col])
+			nits++;
+		/* The displayed row is different from the buffer! not useful to accelerate the move. */
+		if (nits > 0) {	/* XXX: arbitrary choice */
+		    /* move in memory: */
+		    for (col = r->TermWin.ncol; col--; ) {
+			*dtp++ = *dtp2++;
+			*drp++ = *drp2++;
+		    }
+		    /* start of the region:  */
+		    if (len == -1)
+			len = row;
+		    /* mmc: push the new end: */
+		    wlen = row;
+		    continue;	/* mmc: So we skip the XCopyArea, and will do it in next cycle! */
+		    /* bug: What if continue will exit the cycle!!! */
+		}
+	    }
+
+	    if (len != -1) {
+		/* also comes here at end if needed because of >= above */
+		if (wlen < len)
+		    SWAP_IT(wlen, len, int);
+		/* D_SCREEN */
+		XCopyArea(r->Xdisplay, drawBuffer, drawBuffer,
+			  r->TermWin.gc,
+			  /* start */
+			  0, Row2Pixel(len + i),
+			  /* dimension: */
+			  (unsigned int)TermWin_TotalWidth(),
+			  (unsigned int)Height2Pixel(wlen - len + 1),
+			  /* destination */
+			  0, Row2Pixel(len));
+		len = -1;
+	    }
+	}
+	if (len != -1)
+	    fprintf(stderr,"BUG\n");
+
+    }
+    return refresh_type;
+}
+#endif /* NO_SLOW_LINK_SUPPORT */
+
 /* INTPROTO */
 void
 cleanup_cursor_and_outline(rxvt_t *r, screen_t *screen, rend_t cc1, rend_t cc2,
