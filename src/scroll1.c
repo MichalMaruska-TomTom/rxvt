@@ -60,15 +60,19 @@ mark_damaged_chars_from_left(rxvt_t *r,
 		|| t == 0	/* screen cleared elsewhere */
 		|| t == ' ')
 	    ) {
+	  if (!(drp[col] & RS_needs_redraw)) { /* just exposed */
+	    /* fprintf(stderr,"%s%d/%d RS_needs_redraw%s\n", color_red, row, col,
+	       color_reset);*/
 	    continue;
+	  }
 	}
 	if (clear_next) {	/* previous char caused change here */
-	    clear_next = 0;
-	    /* mmc: we simulate, as if .... */
-	    /* Drawn text is Zeroed. todo: set `RS_needs_redraw' instead! */
-	    dtp[col] = 0;
-	    if (is_same_char)	/* don't cascade into next char */
-		continue;
+	  clear_next = 0;
+	  /* mmc: we simulate, as if .... */
+	  /* Drawn text is Zeroed. todo: set `RS_needs_redraw' instead! */
+	  dtp[col] = 0;
+	  if (is_same_char)	/* don't cascade into next char */
+	    continue;
 	}
 	j = MONO_BOLD(drp[col]) ? 1 : 0;
 # ifndef NO_BOLDFONT
