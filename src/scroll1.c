@@ -106,6 +106,7 @@ set_cursor_characters(rxvt_t *r,screen_t *main_screen, screen_t *screen,
 }
 
 #ifndef NO_SLOW_LINK_SUPPORT
+/* mmc: we do support slow link: so: */
 
 /* INTPROTO */
 unsigned char
@@ -121,7 +122,9 @@ try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
     struct rxvt_hidden *h = r->h;
     const int i = h->num_scr;		  /* mmc: ->num_scr  is the scrolling amount? */;
 
+    /* mmc: This is for scrolling! */
     if (refresh_type == FAST_REFRESH && h->num_scr_allow && i
+	/* mmc:	 FAST_REFRESH  REFRESH_BOUNDS */
 	&& abs(i) < r->TermWin.nrow && !must_clear) {
 
 	int16_t		len, wlen;	/* text length screen/buffer		     */
@@ -135,6 +138,8 @@ try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
 	int		j;
 	rend_t	       *drp2;
 	text_t	       *dtp2;
+
+	D_SCREEN((stderr, "rxvt_scr_refresh(): D: XCopyArea pass"));
 	j = r->TermWin.nrow;	/* ?? */
 	wlen = len = -1;
 
@@ -175,6 +180,21 @@ try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
 		    else if (stp[col] != dtp[col] || srp[col] != drp[col])
 			nits++;
 		/* The displayed row is different from the buffer! not useful to accelerate the move. */
+
+
+		/* useful to move this line:
+		 * we have 2 levels:
+		 *
+		 *  |	     |
+		 *  |---len--|
+		 *  |	     |--+
+		 *  |--wlen--|	|
+		 *  |	     |	|  accelerated move
+		 *  |	     |	|
+		 *  ---------<--+
+		 *
+		 * */
+		/* mmc: changing 8 -> 0 */
 		if (nits > 0) {	/* XXX: arbitrary choice */
 		    /* move in memory: */
 		    for (col = r->TermWin.ncol; col--; ) {
@@ -196,6 +216,15 @@ try_to_scroll(rxvt_t *r, unsigned char refresh_type, screen_t *screen,
 		if (wlen < len)
 		    SWAP_IT(wlen, len, int);
 		/* D_SCREEN */
+#if mmc_debug
+		if (h->debug)
+			fprintf(stderr, "%srxvt_scr_refresh(): XCopyArea: "
+				"moving line %d -> %d by %d (height of the moving block %d)%s\n",
+				color_red,
+				len, wlen, i,
+				wlen - len + 1,
+				color_reset);
+#endif
 		XCopyArea(r->Xdisplay, drawBuffer, drawBuffer,
 			  r->TermWin.gc,
 			  /* start */
