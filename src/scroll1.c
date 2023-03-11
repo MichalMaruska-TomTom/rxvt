@@ -37,6 +37,17 @@ cleanup_cursor_and_outline(rxvt_t *r, screen_t *screen, rend_t cc1, rend_t cc2,
 	    gcvalue.foreground = r->PixColors[Color_fg];
 	}
 #endif
+#if 1				/* mmc! */
+	D_SCREEN((stderr, "%s XDrawRectangle: (%d, %d -- %d, %d)\n",
+		  __FUNCTION__,
+		  Col2Pixel(h->oldcursor.col + morecur),
+		  Row2Pixel(h->oldcursor.row),
+		  (unsigned int)(Width2Pixel(1 + (morecur ? 1 : 0))
+				 - 1),
+		  (unsigned int)(Height2Pixel(1)
+				 - r->TermWin.lineSpace - 1)
+		     ));
+#endif
 	XDrawRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,
 		       Col2Pixel(h->oldcursor.col + morecur),
 		       Row2Pixel(h->oldcursor.row),
