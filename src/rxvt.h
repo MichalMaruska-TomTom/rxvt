@@ -346,6 +346,8 @@ enum {
 # define RS_ukFont		0x00008000u	/* UK character set */
 #endif
 
+# define RS_needs_redraw        0x01000000u /* mmc:! Mark the VT window Cell as it is in an
+					       undefined state: drawn_text/rend is false */
 #ifdef MULTICHAR_SET
 # define RS_multi0		0x10000000u	/* only multibyte characters */
 # define RS_multi1		0x20000000u	/* multibyte 1st byte */

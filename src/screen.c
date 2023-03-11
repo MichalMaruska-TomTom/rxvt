@@ -234,7 +234,7 @@ rxvt_scr_reset(rxvt_t *r)
 				  p, DEFAULT_RSTYLE);
 	    r->screen.tlen[q] = r->swap.tlen[p] = 0;
 	    rxvt_blank_screen_mem(r, r->drawn_text, r->drawn_rend,
-				  p, DEFAULT_RSTYLE);
+				  p, DEFAULT_RSTYLE | RS_needs_redraw);
 	}
 	MEMSET(r->h->charsets, 'B', sizeof(r->h->charsets));
 	r->TermWin.nscrolled = 0;	/* no saved lines */
@@ -376,7 +376,7 @@ rxvt_scr_reset(rxvt_t *r)
 		if (ncol > prev_ncol)
 		    rxvt_blank_line(&(r->drawn_text[p][prev_ncol]),
 				    &(r->drawn_rend[p][prev_ncol]),
-				    ncol - prev_ncol, setrstyle);
+				    ncol - prev_ncol, setrstyle | RS_needs_redraw);
 	    }
 	    MIN_IT(r->screen.cur.col, (int16_t)ncol - 1);
 	    MIN_IT(r->swap.cur.col, (int16_t)ncol - 1);
@@ -1792,10 +1792,19 @@ rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
 
     D_SCREEN((stderr, "rxvt_scr_expose(x:%d, y:%d, w:%d, h:%d) area (c:%d,r:%d)-(c:%d,r:%d)", x, y, width, height, rc[PART_BEG].col, rc[PART_BEG].row, rc[PART_END].col, rc[PART_END].row));
 
-    for (i = rc[PART_BEG].row; i <= rc[PART_END].row; i++)
+    for (i = rc[PART_BEG].row; i <= rc[PART_END].row; i++) {
+	/* mmc: RS_needs_redraw	 Is this the default background?  or rather it is empty	 drawn_rend ?  */
+	/* mmc: todo:	i should set the ->drawn_rend  to  `RS_needs_redraw'*/
+#if 0
 	MEMSET(&(r->drawn_text[i][rc[PART_BEG].col]), 0,
 	       rc[PART_END].col - rc[PART_BEG].col + 1);
-
+#endif
+	{
+	    int j;
+	    for (j = rc[PART_BEG].col; j <=  rc[PART_END].col;j++)
+		r->drawn_rend[i][j] = RS_needs_redraw;
+	}
+    }
     if (refresh)
 	rxvt_scr_refresh(r, SLOW_REFRESH | REFRESH_BOUNDS);
 }

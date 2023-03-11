@@ -111,6 +111,10 @@ cell_stays_unchanged(rend_t rend, int16_t* ret_col,
 	&& (rend == drp[col]	/* Either rendition the same or	 */
 	    || (stp[col] == ' '	/* (both) space w/ no background change*/
 		&& GET_BGATTR(rend) == GET_BGATTR(drp[col])))){
+	/* but if exposed: */
+	if (drp[col] & RS_needs_redraw)
+	    return FALSE;
+
 	if (!IS_MULTI1(rend))
 	    return TRUE;   /* This displayed rectangle needs no change!	 Hurra! */
 #ifdef MULTICHAR_SET
