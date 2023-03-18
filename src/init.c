@@ -997,7 +997,7 @@ rxvt_color_aliases(rxvt_t *r, int idx)
  * Probe the modifier keymap to get the Meta (Alt) and Num_Lock settings
  * Use resource ``modifier'' to override the Meta modifier
  */
-/* INTPROTO */
+/* EXTPROTO */
 void
 rxvt_get_ourmods(rxvt_t *r)
 {
