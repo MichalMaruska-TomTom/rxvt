@@ -52,7 +52,7 @@ INSTALL_DATA = @INSTALL@ -m 644
 # Flags & libs
 # add -DBINDIR=\""$(bindir)/"\" to CPPFLAGS, if we need to spawn a program
 
-CFLAGS = @CFLAGS@ 
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@ @XPM_CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 DEFS = @DEFS@
