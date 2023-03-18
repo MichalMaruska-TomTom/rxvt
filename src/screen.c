@@ -2154,7 +2154,6 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     rend_t          cc2;	/* store colours at cursor position(s)       */
 # endif
 #endif
-    char           *buffer;	/* local copy of r->h->buffer                */
     struct rxvt_hidden *h = r->h;
     screen_t *screen, *main_screen;
 
