@@ -2919,6 +2919,33 @@ rxvt_selection_clear(rxvt_t *r)
     CLEAR_SELECTION(r);
 }
 
+/* EXTPROTO */
+void
+rxvt_assert_selection(rxvt_t *r, const char* new_selection_text, int len, Time tm,
+		      int ownership)
+{
+    /* text is owned by r, and will be freed in the future, on the next call here. */
+    if (! ownership)
+	new_selection_text = strdup(new_selection_text); /* use the len */
+
+    r->selection.len = len;
+    if (r->selection.text)
+	free(r->selection.text);
+    r->selection.text = (char*) new_selection_text; /* fixme! discards const fixed. */
+
+    XSetSelectionOwner(r->Xdisplay, XA_PRIMARY, r->TermWin.vt, tm);
+    if (XGetSelectionOwner(r->Xdisplay, XA_PRIMARY) != r->TermWin.vt)
+	rxvt_print_error("can't get primary selection");
+
+    /* mmc:  I would rather use XStoreBytes(dpy, "a123456789", 10); */
+    XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
+		    PropModeReplace, r->selection.text, (int)r->selection.len);
+
+    /* This is problematic? */
+    r->h->selection_time = tm;
+}
+
+
 /* ------------------------------------------------------------------------- */
 /*
  * Copy a selection into the cut buffer
@@ -2998,17 +3025,8 @@ rxvt_selection_make(rxvt_t *r, Time tm)
 	free(new_selection_text);
 	return;
     }
-    r->selection.len = i;
-    if (r->selection.text)
-	free(r->selection.text);
-    r->selection.text = new_selection_text;
-
-    XSetSelectionOwner(r->Xdisplay, XA_PRIMARY, r->TermWin.vt, tm);
-    if (XGetSelectionOwner(r->Xdisplay, XA_PRIMARY) != r->TermWin.vt)
-	rxvt_print_error("can't get primary selection");
-    XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
-		    PropModeReplace, r->selection.text, (int)r->selection.len);
-    r->h->selection_time = tm;
+    /* mmc: This sets a new selection:  */
+    rxvt_assert_selection(r, new_selection_text, i, tm, 1);
     D_SELECT((stderr, "rxvt_selection_make(): r->selection.len=%d", r->selection.len));
 }
 
