@@ -3529,7 +3529,9 @@ rxvt_selection_send(rxvt_t *r, const XSelectionRequestEvent *rq)
 #endif
     Atom            target;
     XTextProperty   ct;
+#ifdef USE_XIM
     XICCEncodingStyle style;
+#endif
     char           *cl[2], dummy[1];
 
     ev.type = SelectionNotify;
@@ -3576,7 +3578,9 @@ rxvt_selection_send(rxvt_t *r, const XSelectionRequestEvent *rq)
 #endif
 	{
 	    target = XA_STRING;
+#ifdef USE_XIM
 	    style = XStringStyle;
+#endif
 	}
 	if (r->selection.text) {
 	    cl[0] = (char *)r->selection.text;
