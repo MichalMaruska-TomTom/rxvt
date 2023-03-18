@@ -32,8 +32,7 @@
    * The result is .... modifying drawn_text so that it results changed, surely,
    * in the following step.
    */
-
-inline void
+/* inline */ void
 mark_damaged_chars_from_left(rxvt_t *r,
 			     text_t *stp,rend_t *srp,
 			     text_t *dtp, rend_t *drp,
@@ -290,7 +289,8 @@ rewrite_buffer(char buffer[], rend_t rend, int16_t len)
 
 /* given the attributes of the cell + global ones -> find the combination?
    Also -- side effect --- sets the X GC of the @r@ */
-inline void
+// fixme: would be better to use abstract type!
+/* inline */ void
 determine_attributes(const rxvt_t *r,
 		     rend_t	     rend,
 #ifdef TTY_256COLOR
