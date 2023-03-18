@@ -2,7 +2,7 @@
 
 .NONPARALLEL:
 
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -fdiagnostics-color=always
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 CFLAGS += -O0
 else
