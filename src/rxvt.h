@@ -1137,7 +1137,7 @@ struct rxvt_hidden {
 #endif
 
 #ifndef XPM_BACKGROUND		/* sync functions with xpm.extpro */
-# define rxvt_scale_pixmap(r, geom)	(0)
+# define rxvt_scale_pixmap(r, geom)	0
 # define rxvt_resize_pixmap(r)
 # define rxvt_set_bgPixmap(r, file)	(0)
 #endif
