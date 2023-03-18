@@ -2937,6 +2937,10 @@ rxvt_assert_selection(rxvt_t *r, const char* new_selection_text, int len, Time t
     if (XGetSelectionOwner(r->Xdisplay, XA_PRIMARY) != r->TermWin.vt)
 	rxvt_print_error("can't get primary selection");
 
+    XSetSelectionOwner(r->Xdisplay,  r->h->xa[XA_CLIPBOARD], r->TermWin.vt, tm);
+    if (XGetSelectionOwner(r->Xdisplay, r->h->xa[XA_CLIPBOARD]) != r->TermWin.vt)
+      rxvt_print_error("can't set %s selection", "clipboard");
+
     /* mmc:  I would rather use XStoreBytes(dpy, "a123456789", 10); */
     XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
 		    PropModeReplace, r->selection.text, (int)r->selection.len);
