@@ -2,7 +2,7 @@ Source: rxvt-beta
 Section: x11
 Priority: extra
 Maintainer: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
-Build-Depends: autotools-dev, debhelper (>= 6), quilt, libx11-dev, libxt-dev, libxpm-dev
+Build-Depends: autotools-dev, debhelper (>= 12), libx11-dev, libxt-dev, libxpm-dev
 Standards-Version: 3.7.3
 
 Package: rxvt-beta
