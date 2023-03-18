@@ -179,7 +179,7 @@ misc.o:             misc.c      $(DEPS) misc.intpro
 netdisp.o:          netdisp.c   $(DEPS) netdisp.intpro	netdisp.h
 ptytty.o:           ptytty.c    $(DEPS) ptytty.intpro
 rxvt.o:             rxvt.c      $(DEPS) 
-screen.o:           screen.c    $(DEPS) screen.intpro
+screen.o:           screen.c    $(DEPS) screen.intpro scroll1.c scroll.c
 scrollbar.o:        scrollbar.c $(DEPS) scrollbar.intpro
 scrollbar-rxvt.o:   scrollbar-rxvt.c  $(DEPS) scrollbar-rxvt.intpro
 scrollbar-next.o:   scrollbar-next.c  $(DEPS) scrollbar-next.intpro
