@@ -2542,59 +2542,60 @@ rxvt_set_gravity(rxvt_t* r, const char* str)
 {
   /* todo: in alist (struct) */
     int trans[9]={
-        // 0
-        // StaticGravity
-        0,WestGravity,EastGravity,
-        // 4:
-        NorthGravity,
-        NorthWestGravity,
-        NorthEastGravity,
+	// 0
+	// StaticGravity
+	0,WestGravity,EastGravity,
+	// 4:
+	NorthGravity,
+	NorthWestGravity,
+	NorthEastGravity,
 
-        SouthGravity,
-        SouthWestGravity,
-        SouthEastGravity,
+	SouthGravity,
+	SouthWestGravity,
+	SouthEastGravity,
     };
+#if mmc_debug
     char* names[9]={
-        "static",
-        "WestGravity",
-        "EastGravity",
-        // 4:
-        "NorthGravity",
-        "NorthWestGravity",
-        "NorthEastGravity",
+	"static",
+	"WestGravity",
+	"EastGravity",
+	// 4:
+	"NorthGravity",
+	"NorthWestGravity",
+	"NorthEastGravity",
 
-        "SouthGravity",
-        "SouthWestGravity",
-        "SouthEastGravity",
+	"SouthGravity",
+	"SouthWestGravity",
+	"SouthEastGravity",
     };
-
+#endif
 
     int g = 0;
     int i;
 
     for (i=0; i< strlen(str); i++){
-        switch (str[i]) {
-        case 'N': g+= 3; break;
-        case 'S': g+= 6; break;
+	switch (str[i]) {
+	case 'N': g+= 3; break;
+	case 'S': g+= 6; break;
 
-        case 'W': g+= 1; break;
-        case 'E': g+= 2; break;
+	case 'W': g+= 1; break;
+	case 'E': g+= 2; break;
 	/* static */
-        }
+	}
     }
     if (g>8)
-        g=0;
+	g=0;
     {
-        /* mmc: Toggle Static & NW gravity: */
-        XSetWindowAttributes attributes = {0};
+	/* mmc: Toggle Static & NW gravity: */
+	XSetWindowAttributes attributes = {0};
 #if mmc_debug
-        fprintf(stderr, "%s: setting Window gravity %s->%d, %s\n", __FUNCTION__, str, g, names[g]);
-        /* fprintf(stderr, "setting Window gravity\n");*/
+	fprintf(stderr, "%s: setting Window gravity %s->%d, %s\n", __FUNCTION__, str, g, names[g]);
+	/* fprintf(stderr, "setting Window gravity\n");*/
 #endif
-        attributes.win_gravity = trans[g];
-        XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
-                                CWWinGravity,
-                                &attributes);
+	attributes.win_gravity = trans[g];
+	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+				CWWinGravity,
+				&attributes);
     }
 }
 /*
