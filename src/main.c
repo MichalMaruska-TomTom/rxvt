@@ -592,14 +592,15 @@ rxvt_change_font(rxvt_t *r, int init, const char *fontname)
 	    if (fontname == NULL)
 		return;
 	    else
-	    	/* search for existing fontname */
-		for (idx = 0; idx < MAX_NFONTS; idx++)
+		/* search for existing fontname */
+		for (idx = 0; idx < MAX_NFONTS; idx++) {
 		    if (r->h->rs[Rs_font + idx] == NULL) continue;
 		    if (!STRCMP(r->h->rs[Rs_font + idx], fontname)) {
 			r->h->fnum = IDX2FNUM(idx);
 			fontname = NULL;
 			break;
 		    }
+		}
 	    break;
 	}
 	/* re-position around the normal font */
