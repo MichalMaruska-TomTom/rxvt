@@ -281,8 +281,6 @@ void
 construct_array_and_hash(hash_table *hash, int num_lines, text_t** buffer, int len,
 			 array_entry* row_table, int current_p)
 {
-    char *beginning = "BEGINNIN";
-
     /* global state:  Should I really hash some string? */
 #if HASH3
     int hash1 = 27;
