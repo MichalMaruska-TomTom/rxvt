@@ -2361,7 +2361,6 @@ void
 rxvt_process_window_ops(rxvt_t *r, const int *args, unsigned int nargs)
 {
     int             x, y;
-    char           *s;
     XWindowAttributes wattr;
     Window          wdummy;
 
@@ -2553,7 +2552,6 @@ void
 rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribute__((unused)))
 {
     int             changed = 0;
-    int             fd;
     int             color;
     char           *buf, *name;
 
@@ -2636,6 +2634,7 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
 	break;
 #if 0
     case XTerm_dumpscreen:	/* no error notices */
+	int fd;
 	if ((fd = open(str, O_RDWR | O_CREAT | O_EXCL, 0600)) >= 0) {
 	    rxvt_scr_dump(r, fd);
 	    close(fd);

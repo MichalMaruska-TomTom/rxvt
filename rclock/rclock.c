@@ -768,8 +768,6 @@ Draw_Window (mywindow_t * W, int full_redraw)
 
 	if ((currentTime - mailTime) >= mailUpdate)
 	  {
-	     struct stat st;
-
 	     if (
 #ifdef ICONWIN
 		 MailUp != MailUp_icon ? MailUp :
