@@ -35,6 +35,7 @@
 #include "main.intpro"		/* PROTOS for internal routines */
 
 #include <signal.h>
+#include <limits.h>
 
 #ifdef TTY_GID_SUPPORT
 # include <grp.h>
@@ -229,7 +230,7 @@ rxvt_alloc(size_t number, size_t size)
      void           *p;
 
      // fixme: this can overflow integer, and error should be returned!
-     if ( (long)number * size > MAX_INT) {
+     if ( (long)number * size > INT_MAX) {
 	 rxvt_clean_exit();
 	 exit(EXIT_FAILURE);
      }
