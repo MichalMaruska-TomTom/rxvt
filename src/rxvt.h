@@ -607,7 +607,7 @@ enum {
 #endif				/* OFFIX_DND */
     XA_CLIPBOARD,
     NUM_XA
-} ;
+};
 
 /*
  * number of graphics points
