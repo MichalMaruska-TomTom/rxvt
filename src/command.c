@@ -2514,13 +2514,12 @@ rxvt_process_osc_seq(rxvt_t *r)
      * rxvt_menubar_dispatch() violates the constness of the string,
      * so do it here
      */
-	    if (arg == XTerm_Menu)
+	    if (arg == XTerm_Menu) {
 #if 0 /* XXX: currently disabled due to security concerns */
 		rxvt_menubar_dispatch(r, (char *)s);
 #else
-		0;
 #endif
-	    else
+	    } else
 		rxvt_xterm_seq(r, arg, (char *)s, eh);
 	    free(s);
 	}
