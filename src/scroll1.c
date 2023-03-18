@@ -154,7 +154,6 @@ find_longest_string_to_draw(rxvt_t *r,
 			    unsigned char *wbyte,
 			    unsigned char must_clear)
 {
-    struct rxvt_hidden *h = r->h;
     int col = *ret_col;
     int len = *ret_len;
 
