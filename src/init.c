@@ -1037,7 +1037,7 @@ rxvt_get_ourmods(rxvt_t *r)
 	    case XK_Alt_R:
 		cm = "alt";
 		realalt = i;
-                r->h->ModAltMask = modmasks[i-1];
+		r->h->ModAltMask = modmasks[i-1];
 		break;
 	    case XK_Super_L:
 	    case XK_Super_R:
