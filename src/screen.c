@@ -2829,7 +2829,7 @@ rxvt_selection_property(rxvt_t *r, Window win, Atom prop)
 }
 /* ------------------------------------------------------------------------- */
 /*
- * Request the current selection: 
+ * Request the current selection:
  * Order: > internal selection if available
  *        > PRIMARY, SECONDARY, CLIPBOARD if ownership is claimed (+)
  *        > CUT_BUFFER0
