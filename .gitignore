@@ -1,0 +1,14 @@
+*.extpro
+*.intpro
+*.o
+*.lo
+
+cscope*
+src/.libs
+src/.protos
+
+debian/rxvt-beta
+debian/.debhelper
+
+# keep this!
+readme.mmc
