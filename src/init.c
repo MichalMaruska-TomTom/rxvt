@@ -468,6 +468,8 @@ rxvt_init_vars(rxvt_t *r)
     h->CurrentBar = &(h->BarList);
 # endif				/* (MENUBAR_MAX > 1) */
 #endif
+    r->h->scrollstep = 3;       /* default */
+    r->h->scrollpause = 10000;       /* default */
     return 0;
 }
 
@@ -683,6 +685,10 @@ rxvt_init_resources(rxvt_t *r, int argc, const char *const *argv)
     rxvt_color_aliases(r, Color_RV);
 #endif				/* ! NO_BOLD_UNDERLINE_REVERSE */
 
+    if (rs[RS_scrollstep])
+            r->h->scrollstep = atoi(rs[RS_scrollstep]);
+    if (rs[RS_scrollpause])
+            r->h->scrollpause = atoi(rs[RS_scrollpause]);
     return cmd_argv;
 }
 
