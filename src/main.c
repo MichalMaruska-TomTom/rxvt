@@ -167,13 +167,14 @@ rxvt_xerror_handler(const Display *display __attribute__((unused)), const XError
 {
     rxvt_t         *r = rxvt_get_r();
 
+    rxvt_print_error("XError: Request: %d . %d, Error: %d",
+		     event->request_code, event->minor_code,
+		     event->error_code);
+
     if (r->h->allowedxerror == -1) {
 	r->h->allowedxerror = event->error_code;
 	return 0;		/* ignored anyway */
     }
-    rxvt_print_error("XError: Request: %d . %d, Error: %d",
-		     event->request_code, event->minor_code,
-		     event->error_code);
     /* XXX: probably should call rxvt_clean_exit() bypassing X routines */
     exit(EXIT_FAILURE);
     /* NOTREACHED */
