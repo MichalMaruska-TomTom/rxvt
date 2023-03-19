@@ -616,6 +616,7 @@ enum {
     XA_DNDSELECTION,
 #endif				/* OFFIX_DND */
     XA_CLIPBOARD,
+    XA_NET_WM_PID,
     NUM_XA
 } ;
 

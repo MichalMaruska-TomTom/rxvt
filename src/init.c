@@ -346,7 +346,8 @@ const char *const xa_names[NUM_XA] = {
     "DndProtocol",
     "DndSelection",
 #endif
-    "CLIPBOARD"
+    "CLIPBOARD",
+    "_NET_WM_PID"
 };
 
 /*----------------------------------------------------------------------*/
@@ -827,6 +828,12 @@ rxvt_init_command(rxvt_t *r, const char *const *argv)
     XSetWMProtocols(r->Xdisplay, r->TermWin.parent[0],
 		    &(r->h->xa[XA_WMDELETEWINDOW]), 1);
 
+    {
+      long pid = getpid ();
+      XChangeProperty (r->Xdisplay, r->TermWin.parent[0],
+		       r->h->xa[XA_NET_WM_PID], XA_CARDINAL, 32,
+		       PropModeReplace, (unsigned char *)&pid, 1);
+    }
 #ifdef USING_W11LIB
 /* enable W11 callbacks */
     W11AddEventHandler(r->Xdisplay, rxvt_W11_process_x_event);
