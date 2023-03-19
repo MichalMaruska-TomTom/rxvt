@@ -2703,6 +2703,7 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
     case XTerm_set_selection:
 	break;
     case XTerm_set_gravity:
+	rxvt_set_gravity(r, str);
 	break;
     case XTerm_title:
 	rxvt_set_title(r, str);
