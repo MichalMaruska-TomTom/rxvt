@@ -332,8 +332,8 @@ const char *const def_colorName[] = {
 
 const char *const xa_names[NUM_XA] = {
     "COMPOUND_TEXT",
-    "MULTIPLE",	
-    "TARGETS",	
+    "MULTIPLE",
+    "TARGETS",
     "TEXT",
     "TIMESTAMP",
     "VT_SELECTION",
@@ -850,6 +850,8 @@ rxvt_init_command(rxvt_t *r, const char *const *argv)
     r->h->meta_char = (r->Options & Opt_meta8 ? 0x80 : C0_ESC);
 #endif
     rxvt_get_ourmods(r);
+    r->h->PrivateModes &= ~PrivMode_aplKP; /* I don't want to distinguish them by default. */
+
     if (!(r->Options & Opt_scrollTtyOutput))
 	r->h->PrivateModes |= PrivMode_TtyOutputInh;
     if (r->Options & Opt_scrollTtyKeypress)
@@ -1127,6 +1129,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 
 #ifdef PREFER_24BIT
     attributes.background_pixmap = None;
+    attributes.win_gravity = StaticGravity; /* useless! inside the WM frame */
     attributes.border_pixel = r->PixColors[Color_border];
     attributes.colormap = XCMAP;
     r->TermWin.parent[0] = XCreateWindow(r->Xdisplay, Xroot,
@@ -1136,6 +1139,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					 XDEPTH, InputOutput,
 					 XVISUAL,
 					 CWBackPixmap | CWBorderPixel
+					 | CWWinGravity
 					 | CWColormap, &attributes);
 #else
     /* mmc: I don't use this */
@@ -1189,7 +1193,12 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     {
 	XSetWindowAttributes attributes = {0};
 	attributes.background_pixmap = None;
+	attributes.bit_gravity = StaticGravity; /* ForgetGravity */
 
+	/* mmc: win_gravity:  NorthWest is useful, if:
+	   application wants it
+	   or we don't have scrollback (history) */
+	attributes.win_gravity = StaticGravity; /* ForgetGravity */
 
 	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
 				CWBackPixmap | CWBitGravity | CWWinGravity,

@@ -50,6 +50,7 @@
 # include <sys/stropts.h>      /* for I_PUSH */
 #endif
 
+# include <pty.h>
 
 #ifdef DEBUG_TTY
 # define D_TTY(x)		fprintf x ; fputc('\n', stderr) ; fflush(stderr)

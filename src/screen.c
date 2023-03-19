@@ -254,8 +254,9 @@ rxvt_scr_reset(rxvt_t *r)
 	r->drawn_text = rxvt_calloc(nrow, sizeof(text_t *));
 	r->swap.text = rxvt_calloc(nrow, sizeof(text_t *));
 
-	r->screen.tlen = rxvt_calloc(total_rows, sizeof(int16_t));
-	r->swap.tlen = rxvt_calloc(nrow, sizeof(int16_t));
+	/* mmc: only these */
+	r->screen.tlen = rxvt_alloc(total_rows, sizeof(int16_t));
+	r->swap.tlen = rxvt_alloc(nrow, sizeof(int16_t));
 
 	r->screen.rend = rxvt_calloc(total_rows, sizeof(rend_t *));
 	r->buf_rend = rxvt_calloc(total_rows, sizeof(rend_t *));
@@ -286,6 +287,7 @@ rxvt_scr_reset(rxvt_t *r)
 	r->screen.flags = Screen_DefaultFlags;
 	r->screen.cur.row = r->screen.cur.col = 0;
 	r->screen.charset = 0;
+	r->h->vt_bit_gravity = StaticGravity; /* StaticGravity NorthWestGravity */
 	r->h->current_screen = PRIMARY;
 	r->h->current_output = PRIMARY;
 	rxvt_scr_cursor(r, SAVE);
@@ -318,8 +320,15 @@ rxvt_scr_reset(rxvt_t *r)
 
 	if (nrow < prev_nrow) {
 	    /* delete rows */
-	    k = min(r->TermWin.nscrolled, prev_nrow - nrow);
-	    rxvt_scroll_text(r, 0, (int)prev_nrow - 1, k, 1);
+	    int v_shift;
+	    /* mmc: This is my fix, for this bug:
+	       Resizing eats bottom lines, instead of pushing top lines into scroll-back. */
+	    v_shift = - ( (nrow - 1) - r->screen.cur.row);
+	    if (v_shift < 0)
+		v_shift = 0;
+	    /* the whole screen (prev) is scrolled up by v_shift  */
+	    rxvt_scroll_text(r, 0, (int)prev_nrow - 1, v_shift, 1);
+	    // and now the bottom is dropped!
 	    for (p = nrow; p < prev_nrow; p++) {
 		q = p + r->TermWin.saveLines;
                 /* mmc: why testing?  */
@@ -3266,7 +3275,9 @@ rxvt_selection_send(rxvt_t *r, const XSelectionRequestEvent *rq)
 #endif
     Atom            target;
     XTextProperty   ct;
+#ifdef USE_XIM
     XICCEncodingStyle style;
+#endif
     char           *cl[2], dummy[1];
 
     ev.type = SelectionNotify;
@@ -3313,7 +3324,9 @@ rxvt_selection_send(rxvt_t *r, const XSelectionRequestEvent *rq)
 #endif
 	{
 	    target = XA_STRING;
+#ifdef USE_XIM
 	    style = XStringStyle;
+#endif
 	}
 	if (r->selection.text) {
 	    cl[0] = (char *)r->selection.text;

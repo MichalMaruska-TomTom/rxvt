@@ -35,6 +35,7 @@
 #include "main.intpro"		/* PROTOS for internal routines */
 
 #include <signal.h>
+#include <limits.h>
 
 #ifdef TTY_GID_SUPPORT
 # include <grp.h>
@@ -140,7 +141,7 @@ rxvt_Child_signal(int sig __attribute__((unused)))
 
     r = rxvt_get_r();
     if (pid == r->h->cmd_pid)
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 
     errno = save_errno;
     signal(SIGCHLD, rxvt_Child_signal);
@@ -168,13 +169,14 @@ rxvt_xerror_handler(const Display *display __attribute__((unused)), const XError
 {
     rxvt_t         *r = rxvt_get_r();
 
+    rxvt_print_error("XError: Request: %d . %d, Error: %d",
+		     event->request_code, event->minor_code,
+		     event->error_code);
+
     if (r->h->allowedxerror == -1) {
 	r->h->allowedxerror = event->error_code;
 	return 0;		/* ignored anyway */
     }
-    rxvt_print_error("XError: Request: %d . %d, Error: %d",
-		     event->request_code, event->minor_code,
-		     event->error_code);
     /* XXX: probably should call rxvt_clean_exit() bypassing X routines */
     exit(EXIT_FAILURE);
     /* NOTREACHED */
@@ -218,6 +220,28 @@ rxvt_malloc(size_t size)
 	return p;
 
      fprintf(stderr, APL_NAME ": memory allocation failure.  Aborting");
+     rxvt_clean_exit();
+     exit(EXIT_FAILURE);
+     /* NOTREACHED */
+}
+
+/* mmc: I wanted to convert some (useless) rxvt_calloc call to faster version, w/o zeroing. */
+/* EXTPROTO */
+void           *
+rxvt_alloc(size_t number, size_t size)
+{
+     void           *p;
+
+     // fixme: this can overflow integer, and error should be returned!
+     if ( (long)number * size > INT_MAX) {
+	 rxvt_clean_exit();
+	 exit(EXIT_FAILURE);
+     }
+
+     p = malloc(number * size);
+     if (p)
+	return p;
+
      rxvt_clean_exit();
      exit(EXIT_FAILURE);
      /* NOTREACHED */
@@ -399,7 +423,11 @@ rxvt_window_calc(rxvt_t *r, unsigned int width, unsigned int height)
     unsigned int    max_width, max_height;
 
     r->szHint.flags = PMinSize | PResizeInc | PBaseSize | PWinGravity;
-    r->szHint.win_gravity = NorthWestGravity;
+    r->szHint.win_gravity = StaticGravity;
+    /* NorthWestGravity      mmc: harmless?
+     * This is the win grav. of the rxvt's `top'.
+     * Above that is the WM's frame window. ... Is it for resizing? */
+
     /* r->szHint.min_aspect.x = r->szHint.min_aspect.y = 1; */
 
     recalc_x = recalc_y = 0;
@@ -571,14 +599,15 @@ rxvt_change_font(rxvt_t *r, int init, const char *fontname)
 	    if (fontname == NULL)
 		return;
 	    else
-	    	/* search for existing fontname */
-		for (idx = 0; idx < MAX_NFONTS; idx++)
+		/* search for existing fontname */
+		for (idx = 0; idx < MAX_NFONTS; idx++) {
 		    if (r->h->rs[Rs_font + idx] == NULL) continue;
 		    if (!STRCMP(r->h->rs[Rs_font + idx], fontname)) {
 			r->h->fnum = IDX2FNUM(idx);
 			fontname = NULL;
 			break;
 		    }
+		}
 	    break;
 	}
 	/* re-position around the normal font */
