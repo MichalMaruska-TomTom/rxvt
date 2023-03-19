@@ -2922,9 +2922,14 @@ rxvt_selection_clear(rxvt_t *r)
 int
 assert_single_selection(Display* display, Window window, Atom atom, const char* name, Time tm)
 {
+  Window owner;
   int res;
   res = XSetSelectionOwner(display, atom, window, tm);
   XFlush(display);
+  if ((owner = XGetSelectionOwner(display, atom)) != window) {
+      rxvt_print_error("can't set %s selection %x (%d) time %lu", name, owner, res, tm);
+      return FALSE;
+  }
   return TRUE;
 }
 
