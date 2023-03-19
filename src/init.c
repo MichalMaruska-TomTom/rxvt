@@ -1003,7 +1003,7 @@ rxvt_color_aliases(rxvt_t *r, int idx)
  * Probe the modifier keymap to get the Meta (Alt) and Num_Lock settings
  * Use resource ``modifier'' to override the Meta modifier
  */
-/* INTPROTO */
+/* EXTPROTO */
 void
 rxvt_get_ourmods(rxvt_t *r)
 {
@@ -1043,6 +1043,7 @@ rxvt_get_ourmods(rxvt_t *r)
 	    case XK_Alt_R:
 		cm = "alt";
 		realalt = i;
+		r->h->ModAltMask = modmasks[i-1];
 		break;
 	    case XK_Super_L:
 	    case XK_Super_R:

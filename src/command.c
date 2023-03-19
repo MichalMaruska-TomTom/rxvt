@@ -56,7 +56,7 @@
 void
 rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 {
-    int             ctrl, meta, shft, len;
+    int             ctrl, meta, shft, alt, len;
     unsigned int    newlen;
     KeySym          keysym;
 #ifdef DEBUG_CMD
@@ -76,6 +76,7 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
     shft = (ev->state & ShiftMask);
     ctrl = (ev->state & ControlMask);
     meta = (ev->state & r->h->ModMetaMask);
+    alt = (ev->state & r->h->ModAltMask);
     if (r->numlock_state || (ev->state & r->h->ModNumLockMask)) {
 	r->numlock_state = (ev->state & r->h->ModNumLockMask);
 	PrivMode((!r->numlock_state), PrivMode_aplKP);
@@ -131,6 +132,34 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 	    }
 	}
 #endif
+	/* scrolling with Alt-p/n and Alt-i/k */
+        if (alt) {
+            /* mmc: sorry, copy'n'pasting   fixme!*/
+            int             lnsppg; /* lines-per-page */
+
+            r->h->check_for_scrolling = 1;
+#ifdef PAGING_CONTEXT_LINES
+                    lnsppg = r->TermWin.nrow - PAGING_CONTEXT_LINES;
+#else
+                    lnsppg = r->TermWin.nrow * 4 / 5;
+#endif
+            if (keysym == XK_p) {
+                rxvt_scr_page(r, UP, lnsppg);
+                return ;
+            };
+	    if (keysym == XK_n){
+                rxvt_scr_page(r, DN, lnsppg);
+                return;
+            }
+            if (keysym == XK_i) {
+                rxvt_scr_page(r, UP, 1);
+                return ;
+            }
+	    if (keysym == XK_k){
+                rxvt_scr_page(r, DN, 1);
+                return;
+            }
+        }
 
 	if (r->TermWin.saveLines) {
 #ifdef UNSHIFTED_SCROLLKEYS
