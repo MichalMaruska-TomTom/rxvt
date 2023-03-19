@@ -2246,7 +2246,7 @@ void
 rxvt_map_menuBar(rxvt_t *r, int map)
 {
     if (rxvt_menubar_mapping(r, map))
-	rxvt_resize_all_windows(r, 0, 0, 0);
+	rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
 }
 #endif
 /*----------------------- end-of-file (C source) -----------------------*/

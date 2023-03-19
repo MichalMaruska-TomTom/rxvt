@@ -145,16 +145,20 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 #else
 		lnsppg = r->TermWin.nrow * 4 / 5;
 #endif
-		if (keysym == XK_Prior) {
+                    /* fixme: This is a quick test: */
+                r->h->check_for_scrolling = 1;
+                if (keysym == XK_Prior) { /* mmc: shouldn't it be  XK_Page_Up ?*/
 		    rxvt_scr_page(r, UP, lnsppg);
 		    return;
-		} else if (keysym == XK_Next) {
+                } else if (keysym == XK_Next) { /* XK_Page_Down */
 		    rxvt_scr_page(r, DN, lnsppg);
 		    return;
 		}
 	    }
 #ifdef SCROLL_ON_UPDOWN_KEYS
 	    if (IS_SCROLL_MOD) {
+                /* fixme: This is a quick test: */
+                r->h->check_for_scrolling = 1;
 		if (keysym == XK_Up) {
 		    rxvt_scr_page(r, UP, 1);
 		    return;
@@ -195,6 +199,11 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
 		case XK_KP_Subtract:	/* Shift+KP_Subtract = smaller font */
 		    rxvt_change_font(r, 0, FONT_DN);
 		    return;
+                case XK_KP_Multiply:
+                    rxvt_scr_change_screen(r, (r->h->current_screen == PRIMARY)
+					   ?SECONDARY:PRIMARY);
+                    r->h->current_output = PRIMARY;
+                    return;
 		}
 	    }
 	}
@@ -1063,16 +1072,23 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 
     case ConfigureNotify:
 	if (ev->xconfigure.window == r->TermWin.parent[0]) {
+            /* mmc: I want to use bit gravity static. Maybe one day I will be ready
+             * to reuse static bits, after the
+             * Top window has been resized NW, VT window is static window gravity. */
 	    int             height, width;
+            int x,y;
 
 	    do {	/* Wrap lots of configures into one */
 		width = ev->xconfigure.width;
 		height = ev->xconfigure.height;
+                x =  ev->xconfigure.x;
+                y =  ev->xconfigure.y;
 	    } while (XCheckTypedWindowEvent(r->Xdisplay, ev->xconfigure.window,
 					    ConfigureNotify, ev));
 	    if (r->szHint.width != width || r->szHint.height != height)
 		rxvt_resize_all_windows(r, (unsigned int)width,
-					(unsigned int)height, 1);
+					/* mmc: why is (unsigned int)  necessary? */
+					(unsigned int)height, 1, (unsigned int)x, (unsigned int)y);
 #ifdef TRANSPARENT		/* XXX: maybe not needed - leave in for now */
 	    if (r->Options & Opt_transparent) {
 		rxvt_check_our_parents(r);
@@ -1138,7 +1154,7 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 	    rxvt_scr_expose(r, ev->xexpose.x, ev->xexpose.y,
 			    ev->xexpose.width, ev->xexpose.height, False);
 #else
-	    rxvt_scr_expose(r, ev->xexpose.x, 0,
+	    rxvt_scr_expose(r, ev->xexpose.x, ev->xexpose.y,
 			    ev->xexpose.width, r->TermWin.height, False);
 #endif
 	    h->want_refresh = 1;
@@ -1535,6 +1551,7 @@ rxvt_check_our_parents(rxvt_t *r)
     if (rootdepth != wattr.depth) {
 	if (r->h->am_transparent) {
 	    pchanged = 1;
+	    /* mmc: I have no idea if I use this: i don't use trasparency!*/
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
 	    r->h->am_transparent = r->h->am_pixmap_trans = 0;
@@ -1617,8 +1634,10 @@ rxvt_check_our_parents(rxvt_t *r)
 		      (unsigned int)image->height);
 	    XFreeGC(r->Xdisplay, gc);
 	    XDestroyImage(image);
+#if 0       /* mmc!  see my comment above */
 	    XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.vt,
 				       r->TermWin.pixmap);
+#endif
 	    if (!r->h->am_transparent || !r->h->am_pixmap_trans)
 		pchanged = 1;
 	    r->h->am_transparent = r->h->am_pixmap_trans = 1;
@@ -1661,6 +1680,8 @@ rxvt_check_our_parents(rxvt_t *r)
 	    D_X((stderr, "InheritPixmap Turning off"));
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.parent[0],
 				 r->PixColors[Color_fg]);
+	    /* mmc: maybe we switch off transparency here?  Then I should set
+	       BackgroundPixmap to None. Fixme! */
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
 	    r->h->am_transparent = 0;
@@ -1681,8 +1702,10 @@ rxvt_check_our_parents(rxvt_t *r)
 	    for (n = 0; n < (unsigned int)i; n++)
 		XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.parent[n],
 					   ParentRelative);
+#if 0       /* mmc: no idea yet */
 	    XSetWindowBackgroundPixmap(r->Xdisplay, r->TermWin.vt,
 				       ParentRelative);
+#endif
 	    r->h->am_transparent = 1;
 	}
 	for (; i < (int)(sizeof(r->TermWin.parent) / sizeof(Window)); i++)
@@ -2529,6 +2552,8 @@ rxvt_process_osc_seq(rxvt_t *r)
  *      39 = change default fg color
  *      49 = change default bg color
  *      55 = dump scrollback buffer and all of screen
+ *      56 = set X PRIMARY selection
+ *      57 = set the gravity
  */
 /* EXTPROTO */
 void
@@ -2546,6 +2571,10 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
     /* FALLTHROUGH */
     case XTerm_iconName:
 	rxvt_set_iconName(r, str);
+	break;
+    case XTerm_set_selection:
+	break;
+    case XTerm_set_gravity:
 	break;
     case XTerm_title:
 	rxvt_set_title(r, str);
@@ -2772,7 +2801,7 @@ rxvt_process_terminal_mode(rxvt_t *r, int mode, int priv __attribute__((unused))
 #ifdef scrollBar_esc
 	case scrollBar_esc:
 	    if (rxvt_scrollbar_mapping(r, state)) {
-		rxvt_resize_all_windows(r, 0, 0, 0);
+		rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
 		rxvt_scr_touch(r, True);
 	    }
 	    break;

@@ -114,6 +114,12 @@ typedef struct {
     Window          parent[6];	/* parent identifiers - we're parent[0]     */
     Window          vt;		/* vt100 window                             */
     GC              gc;		/* GC for drawing text                      */
+    GC		    background_gc; /* GC to make AreaFills: Since i avoid
+				   * ClearArea, I explicitely fill with the
+				   * background color.	But to do that, I
+				   * need a GC with the hypothetical window
+				   * background color set as _foreground_ of
+				   * this suitable GC. */
     XFontStruct    *font;	/* main font structure                      */
     XFontStruct    *boldFont;	/* bold font                                */
     XFontStruct    *boldFont_loaded;	/* bold font loaded                 */
@@ -299,6 +305,9 @@ typedef struct rxvt_vars {
     char           *tabs;	/* per location: 1 == tab-stop               */
     screen_t        screen;
     screen_t        swap;
+    screen_t        snapshot;   /* mmc: when needed, we detach output from working (being written to)
+                                 * buffer(s): So, we display (into X server) from snapshot, but
+                                 * the subprocess works on screen/swap. */
     selection_t     selection;
     sstyle_t        selection_style;
     ENC_METHOD      encoding_method;

@@ -735,7 +735,7 @@ rxvt_change_font(rxvt_t *r, int init, const char *fontname)
     rxvt_set_colorfgbg(r);
 
     if (!init) {
-	rxvt_resize_all_windows(r, 0, 0, 0);
+	rxvt_resize_all_windows(r, 0, 0, 0, 0, 0);
 	rxvt_scr_touch(r, True);
     }
     return;
@@ -879,9 +879,11 @@ rxvt_set_window_color(rxvt_t *r, int idx, const char *color)
 /* XSetWindowAttributes attr; */
 /* Cursor cursor; */
   Done:
+#if 0   /* mmc: would cause (later) flicker */
     if (idx == Color_bg && !(r->Options & Opt_transparent))
 	XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 			     r->PixColors[Color_bg]);
+#endif
 
 /* handle Color_BD, scrollbar background, etc. */
 
@@ -1026,7 +1028,8 @@ rxvt_rXAllocColor(rxvt_t *r, XColor *screen_in_out, const char *colour)
  * -------------------------------------------------------------------- */
 /* EXTPROTO */
 void
-rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int ignoreparent)
+rxvt_resize_all_windows(rxvt_t *r, unsigned int width, unsigned int height, int ignoreparent,
+			unsigned int x, unsigned int y)
 {
     int             fix_screen;
 #ifdef SMART_RESIZE	
@@ -1148,7 +1151,7 @@ rxvt_set_widthheight(rxvt_t *r, unsigned int width, unsigned int height)
     if (width != r->TermWin.width || height != r->TermWin.height) {
 	width += r->szHint.base_width;
 	height += r->szHint.base_height;
-	rxvt_resize_all_windows(r, width, height, 0);
+	rxvt_resize_all_windows(r, width, height, 0, wattr.x, wattr.y); /* mmc! correct? */
     }
 }
 

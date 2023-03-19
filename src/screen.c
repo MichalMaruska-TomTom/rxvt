@@ -4,6 +4,8 @@
  * $Id: screen.c,v 1.258 2003/03/23 16:55:50 gcw Exp $
  *
  * Copyright (c) 1997-2001 Geoff Wing <gcw@pobox.com>
+ * Copyright (c) 2005      Michal Maruska <michal@ruska.it>
+ *                           Flicker-free redisplay
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,23 +104,45 @@ const KNOWN_ENCODINGS known_encodings[] = {
  */
 #define drawBuffer	(r->TermWin.vt)
 
+/* mmc: Since I set the background to None, I have to explicitetly fill with bg color. */
 #define CLEAR_ROWS(row, num)						\
+{\
+    D_SCREEN((stderr, "%s %sCLEAR_ROWS%s: (%d -- %d)\n", __FUNCTION__,color_yellow, \
+	      color_reset,row, num));					\
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, r->TermWin.int_bwidth,	\
-		   Row2Pixel(row), (unsigned int)r->TermWin.width,	\
-		   (unsigned int)Height2Pixel(num), False)
+	XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		       r->TermWin.int_bwidth, Row2Pixel(row),	\
+		       (unsigned int)r->TermWin.width,	\
+		       (unsigned int)Height2Pixel(num)); \
+}
 
+/* mmc: why needed?
+ * |-------|--------
+ * |       y
+ * |x      NUM....S
+ */
+/* mmc: Since I set the background to None, i have to explicitely fill with bg color. */
 #define CLEAR_CHARS(x, y, num)						\
+{\
+    D_SCREEN((stderr, "%s CLEAR_CHARS: (%d, %d -- %d)\n", __FUNCTION__,x, y, num));\
+    \
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, x, y,			\
+       XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		   x, y,					   \
 		   (unsigned int)Width2Pixel(num),			\
-		   (unsigned int)Height2Pixel(1), False)
+		      (unsigned int)Height2Pixel(1));		   \
+}
 
+/* mmc:  Foreground color!  XFillRectangle  */
 #define ERASE_ROWS(row, num)						\
+{\
+    D_SCREEN((stderr, "%s %sERASE_ROWS%s: (%d --- %d)\n", __FUNCTION__,color_yellow,\
+	      color_reset,row, num));					\
     XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,		\
 		   r->TermWin.int_bwidth, Row2Pixel(row),		\
 		   (unsigned int)r->TermWin.width,			\
-		   (unsigned int)Height2Pixel(num))
+		   (unsigned int)Height2Pixel(num));\
+}
 
 /* ------------------------------------------------------------------------- *
  *                        SCREEN `COMMON' ROUTINES                           *
@@ -128,14 +152,22 @@ const KNOWN_ENCODINGS known_encodings[] = {
 void
 rxvt_blank_line(text_t *et, rend_t *er, unsigned int width, rend_t efs)
 {
+    /* mmc: \parameter et is the just the chars. \parameter rend_t is chars with attributes:
+     * color, bold
+     * So, we fill-in with the template EFS. To be sure, we clear its attributes.
+     * So just the color remains? */
     MEMSET(et, ' ', (size_t)width);
+    /* clear the attributes */
     efs &= ~RS_baseattrMask;
+    /* #define RS_baseattrMask		(RS_Bold|RS_Blink|RS_RVid|RS_Uline) */
     for (; width--;)
 	*er++ = efs;
 }
 
 /* ------------------------------------------------------------------------- */
-/* Fill a full line with blanks - make sure it is allocated first */
+/* Fill a `full' line with blanks - make sure it is allocated first */
+/* mmc: used this way:
+ * rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend, p, setrstyle); */
 /* INTPROTO */
 void
 rxvt_blank_screen_mem(rxvt_t *r, text_t **tp, rend_t **rp, unsigned int row, rend_t efs)
@@ -145,6 +177,9 @@ rxvt_blank_screen_mem(rxvt_t *r, text_t **tp, rend_t **rp, unsigned int row, ren
 
 #ifdef DEBUG_STRICT
     assert((tp[row] && rp[row]) || (tp[row] == NULL && rp[row] == NULL));
+#endif
+#if 0
+    fprintf(stderr, "%s: %d\n", __FUNCTION__, row);
 #endif
     if (tp[row] == NULL) {
 	tp[row] = rxvt_malloc(sizeof(text_t) * width);
@@ -166,39 +201,54 @@ rxvt_scr_reset(rxvt_t *r)
     unsigned int    ncol, nrow, prev_ncol, prev_nrow,
 		    total_rows, prev_total_rows;
     unsigned int    p, q;
-    int             k;
     rend_t          setrstyle;
 
-    D_SCREEN((stderr, "rxvt_scr_reset()"));
+    D_SCREEN ((stderr, "%s: init", __FUNCTION__));
 
-    r->TermWin.view_start = 0;
+    r->TermWin.view_start = 0;  /* mmc: the start of scroll-back ? */
     RESET_CHSTAT(r->h);
-    r->h->num_scr = 0;
+    r->h->num_scr = 0;          /* mmc: ??? number lines scrolled ??? */
 
     prev_ncol = r->h->prev_ncol;
     prev_nrow = r->h->prev_nrow;
+
+    /* mmc: when does it happen? */
     if (r->TermWin.ncol == 0)
 	r->TermWin.ncol = 80;
     if (r->TermWin.nrow == 0)
 	r->TermWin.nrow = 24;
     ncol = r->TermWin.ncol;
     nrow = r->TermWin.nrow;
+    /* mmc: no change! */
     if (ncol == prev_ncol && nrow == prev_nrow)
 	return;
 
-    r->h->want_refresh = 1;
+    r->h->want_refresh = 1;     /* mmc:  what is it? */
 
+    /* mmc: so it must not be changed (along w/ change in ncols/nrows */
     total_rows = nrow + r->TermWin.saveLines;
     prev_total_rows = prev_nrow + r->TermWin.saveLines;
 
+    /* mmc: terminal offers the concept of scrolling region ... ncurses uses it.
+     *      It's a subinterval of screen rows, on which to apply the `scroll' operation. */
     r->screen.tscroll = 0;
     r->screen.bscroll = nrow - 1;
 
+    /* at the very beginning: */
     if (prev_nrow == 0) {
+#if mmc_debug
+	if (r->h->current_output == SECONDARY)
+	    fprintf(stderr, "%s%s%s\n", color_red, __FUNCTION__, color_reset);
+#endif
+	/* fprintf(stderr,"%s: building a NEW screen (previously 0 x 0)\n", __FUNCTION__);*/
+	/* mmc: should I fill the window w/ bg color? */
 /*
  * A: first time called so just malloc everything : don't rely on realloc
  *    Note: this is still needed so that all the scrollback lines are NULL
  */
+	/* mmc: Why Calloc, when we immediately fill it with spaces ' ' ??
+	 * My bad: these are just pointers, which ---rightly-- should be NULL.
+	 * The real lines are allocated in `rxvt_blank_screen_mem' ! */
 	r->screen.text = rxvt_calloc(total_rows, sizeof(text_t *));
 	r->buf_text = rxvt_calloc(total_rows, sizeof(text_t *));
 	r->drawn_text = rxvt_calloc(nrow, sizeof(text_t *));
@@ -212,15 +262,23 @@ rxvt_scr_reset(rxvt_t *r)
 	r->drawn_rend = rxvt_calloc(nrow, sizeof(rend_t *));
 	r->swap.rend = rxvt_calloc(nrow, sizeof(rend_t *));
 
+	/* just get the memory. The contents is written only when needed! */
+	/* i don't allocate the rows! */
+	r->snapshot.rend = rxvt_calloc(nrow, sizeof(rend_t *));
+	r->snapshot.text = rxvt_calloc(nrow, sizeof(text_t *));
+	r->snapshot.tlen = rxvt_alloc(nrow, sizeof(int16_t));
+
+        /* bug: fixme: so, the saveLines are not allocated? */
 	for (p = 0; p < nrow; p++) {
 	    q = p + r->TermWin.saveLines;
+            /* mmc: The width is taken as  r->TermWin.ncol */
 	    rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
 				  q, DEFAULT_RSTYLE);
 	    rxvt_blank_screen_mem(r, r->swap.text, r->swap.rend,
 				  p, DEFAULT_RSTYLE);
-	    r->screen.tlen[q] = r->swap.tlen[p] = 0;
+	    r->screen.tlen[q] = r->swap.tlen[p] = 0; /* mmc: This is already done! by calloc.  */
 	    rxvt_blank_screen_mem(r, r->drawn_text, r->drawn_rend,
-				  p, DEFAULT_RSTYLE);
+				  p, DEFAULT_RSTYLE | RS_needs_redraw);
 	}
 	MEMSET(r->h->charsets, 'B', sizeof(r->h->charsets));
 	r->TermWin.nscrolled = 0;	/* no saved lines */
@@ -229,6 +287,7 @@ rxvt_scr_reset(rxvt_t *r)
 	r->screen.cur.row = r->screen.cur.col = 0;
 	r->screen.charset = 0;
 	r->h->current_screen = PRIMARY;
+	r->h->current_output = PRIMARY;
 	rxvt_scr_cursor(r, SAVE);
 #if NSCREENS
 	r->swap.flags = Screen_DefaultFlags;
@@ -263,6 +322,7 @@ rxvt_scr_reset(rxvt_t *r)
 	    rxvt_scroll_text(r, 0, (int)prev_nrow - 1, k, 1);
 	    for (p = nrow; p < prev_nrow; p++) {
 		q = p + r->TermWin.saveLines;
+                /* mmc: why testing?  */
 		if (r->screen.text[q]) {
 #ifdef DEBUG_STRICT
 		    assert(r->screen.rend[q]);
@@ -270,7 +330,7 @@ rxvt_scr_reset(rxvt_t *r)
 		    free(r->screen.text[q]);
 		    free(r->screen.rend[q]);
 		}
-		if (r->swap.text[p]) {
+		if (r->swap.text[p]) { /* mmc: why p and q ? */
 #ifdef DEBUG_STRICT
 		    assert(r->swap.rend[p]);
 #endif
@@ -282,7 +342,16 @@ rxvt_scr_reset(rxvt_t *r)
 #endif
 		free(r->drawn_text[p]);
 		free(r->drawn_rend[p]);
+		/* mmc: */
+		if (r->snapshot.text[p]){
+		    free(r->snapshot.text[p]);
+		    free(r->snapshot.rend[p]);
+		    /* no need to zero it, b/c we realloc now! */
 	    }
+	}
+            /* mmc:  bug! */
+            /* mmc: we still have r->buf_text    .... It seems it's pointers to Screen,
+	       used only in `rxvt_scroll_text' */
 	    /* we have fewer rows so fix up cursor position */
 	    MIN_IT(r->screen.cur.row, (int32_t)nrow - 1);
 	    MIN_IT(r->swap.cur.row, (int32_t)nrow - 1);
@@ -291,15 +360,26 @@ rxvt_scr_reset(rxvt_t *r)
 
 	} else if (nrow > prev_nrow) {
 	    /* add rows */
+	    int v_shift;
 	    rxvt_scr_reset_realloc(r);	/* realloc _first_ */
 
-	    k = min(r->TermWin.nscrolled, nrow - prev_nrow);
+            /* reset the new lines: why not r->swap as well? */
 	    for (p = prev_total_rows; p < total_rows; p++) {
 		r->screen.tlen[p] = 0;
 		r->screen.text[p] = NULL;
 		r->screen.rend[p] = NULL;
 	    }
-	    for (p = prev_total_rows; p < total_rows - k; p++)
+            for (p = prev_nrow; p<nrow; p++) {
+                /* mmc: So i have rows allocated only if not NULL! i have to check each row!
+		   Before using it. */
+                r->snapshot.text[p] = NULL;
+                r->snapshot.rend[p] = NULL;
+                /* fixme: r->snapshot.tlen[p] = 0; */
+            }
+            // v_shift = 0;
+	    v_shift = min(r->TermWin.nscrolled, nrow - prev_nrow);
+	    /* mmc:  why only  total_rows - v_shift ?   see below   scrolls !*/
+	    for (p = prev_total_rows; p < total_rows - v_shift; p++)
 		rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
 				      p, setrstyle);
 	    for (p = prev_nrow; p < nrow; p++) {
@@ -308,16 +388,22 @@ rxvt_scr_reset(rxvt_t *r)
 		r->swap.rend[p] = NULL;
 		r->drawn_text[p] = NULL;
 		r->drawn_rend[p] = NULL;
+                /* fixme: bug: I have to init the `snapshot' as well! */
+                /* mmc: swap,  drawn_*     and when  Screen and buf_* ?
+                 * For Screen     12 rows up ^^^ */
 		rxvt_blank_screen_mem(r, r->swap.text, r->swap.rend,
 				      p, setrstyle);
+                /* mmc:  XFillArea would flicker !  */
 		rxvt_blank_screen_mem(r, r->drawn_text, r->drawn_rend,
+				      p, setrstyle | RS_needs_redraw);
+		rxvt_blank_screen_mem(r, r->snapshot.text, r->snapshot.rend,
 				      p, setrstyle);
 	    }
-	    if (k > 0) {
-		rxvt_scroll_text(r, 0, (int)nrow - 1, -k, 1);
-		r->screen.cur.row += k;
-		r->screen.s_cur.row += k;
-		r->TermWin.nscrolled -= k;
+	    if (v_shift > 0) {
+		rxvt_scroll_text(r, 0, (int)nrow - 1, -v_shift, 1);
+		r->screen.cur.row += v_shift;
+		r->screen.s_cur.row += v_shift;
+		r->TermWin.nscrolled -= v_shift; /* ok? */
 	    }
 #ifdef DEBUG_STRICT
 	    assert(r->screen.cur.row < r->TermWin.nrow);
@@ -329,6 +415,7 @@ rxvt_scr_reset(rxvt_t *r)
 	}
 /* B2: resize columns */
 	if (ncol != prev_ncol) {
+            /* mmc: why is screen treated separetely from  swap & drawn_text ? */
 	    for (p = 0; p < total_rows; p++) {
 		if (r->screen.text[p]) {
 		    r->screen.text[p] = rxvt_realloc(r->screen.text[p],
@@ -359,10 +446,23 @@ rxvt_scr_reset(rxvt_t *r)
 					&(r->swap.rend[p][prev_ncol]),
 					ncol - prev_ncol, setrstyle);
 		}
+		/* mmc: */
+		if (r->snapshot.text[p]) {
+		    r->snapshot.text[p] = rxvt_realloc(r->snapshot.text[p], ncol * sizeof(text_t));
+		    r->snapshot.rend[p] = rxvt_realloc(r->snapshot.rend[p], ncol * sizeof(rend_t));
+		    MIN_IT(r->snapshot.tlen[p], (int16_t)ncol);
+
+		    if (ncol > prev_ncol)
+			rxvt_blank_line(&(r->snapshot.text[p][prev_ncol]),
+					&(r->snapshot.rend[p][prev_ncol]),
+					ncol - prev_ncol, setrstyle);
+		}
+
 		if (ncol > prev_ncol)
+                    /* mmc:  XFillArea  */
 		    rxvt_blank_line(&(r->drawn_text[p][prev_ncol]),
 				    &(r->drawn_rend[p][prev_ncol]),
-				    ncol - prev_ncol, setrstyle);
+				    ncol - prev_ncol, setrstyle | RS_needs_redraw);
 	    }
 	    MIN_IT(r->screen.cur.col, (int16_t)ncol - 1);
 	    MIN_IT(r->swap.cur.col, (int16_t)ncol - 1);
@@ -373,12 +473,14 @@ rxvt_scr_reset(rxvt_t *r)
 
     r->tabs = rxvt_malloc(ncol * sizeof(char));
 
+    /* precalculate tab columns */
     for (p = 0; p < ncol; p++)
 	r->tabs[p] = (p % TABSIZE == 0) ? 1 : 0;
 
     r->h->prev_nrow = nrow;
     r->h->prev_ncol = ncol;
 
+    /* tell the `subcommand' */
     rxvt_tt_winsize(r->cmd_fd, r->TermWin.ncol, r->TermWin.nrow);
 }
 
@@ -391,6 +493,11 @@ rxvt_scr_reset_realloc(rxvt_t *r)
     nrow = r->TermWin.nrow;
     total_rows = nrow + r->TermWin.saveLines;
 /* *INDENT-OFF* */
+    /* mmc: */
+#if mmc_debug
+    if (total_rows != nrow)
+	fprintf(stderr,"%s%s: %d %d%s\n", color_red, __FUNCTION__, total_rows, nrow,color_reset);
+#endif
     r->screen.text = rxvt_realloc(r->screen.text, total_rows * sizeof(text_t *));
     r->buf_text    = rxvt_realloc(r->buf_text   , total_rows * sizeof(text_t *));
     r->drawn_text  = rxvt_realloc(r->drawn_text , nrow       * sizeof(text_t *));
@@ -403,6 +510,11 @@ rxvt_scr_reset_realloc(rxvt_t *r)
     r->buf_rend    = rxvt_realloc(r->buf_rend   , total_rows * sizeof(rend_t *));
     r->drawn_rend  = rxvt_realloc(r->drawn_rend , nrow       * sizeof(rend_t *));
     r->swap.rend   = rxvt_realloc(r->swap.rend  , nrow       * sizeof(rend_t *));
+
+    /* mmc: I don't use the saveLines -> total_rows */
+    r->snapshot.text   = rxvt_realloc(r->snapshot.text, nrow   * sizeof(text_t *));
+    r->snapshot.rend   = rxvt_realloc(r->snapshot.rend  , nrow * sizeof(rend_t *));
+    r->snapshot.tlen   = rxvt_realloc(r->snapshot.tlen  , nrow * sizeof(int16_t));
 /* *INDENT-ON* */
 }
 
@@ -432,6 +544,10 @@ rxvt_scr_release(rxvt_t *r)
 	free(r->drawn_rend[i]);
 	free(r->swap.text[i]);
 	free(r->swap.rend[i]);
+	if (r->snapshot.text[i]) {
+	    free(r->snapshot.rend[i]);
+	    free(r->snapshot.text[i]);
+	}
     }
     free(r->screen.text);
     free(r->screen.tlen);
@@ -444,7 +560,13 @@ rxvt_scr_release(rxvt_t *r)
     free(r->buf_text);
     free(r->buf_rend);
     free(r->tabs);
-
+    /* mmc: */
+    free(r->snapshot.rend);
+    free(r->snapshot.text);
+    free(r->snapshot.tlen);
+    r->snapshot.tlen = NULL;
+    r->snapshot.text = NULL;
+    r->snapshot.rend = NULL;
 /* NULL these so if anything tries to use them, we'll know about it */
     r->screen.text = r->drawn_text = r->swap.text = NULL;
     r->screen.rend = r->drawn_rend = r->swap.rend = NULL;
@@ -452,6 +574,7 @@ rxvt_scr_release(rxvt_t *r)
     r->buf_text = NULL;
     r->buf_rend = NULL;
     r->tabs = NULL;
+    /* mmc: r->h->prev_nrow  is not set!*/
 }
 
 /* ------------------------------------------------------------------------- */
@@ -460,12 +583,13 @@ rxvt_scr_release(rxvt_t *r)
  */
 /* EXTPROTO */
 void
-rxvt_scr_poweron(rxvt_t *r)
+rxvt_scr_poweron(rxvt_t *r)     /* mmc: invoked by a ctrl-seq. ! */
 {
     D_SCREEN((stderr, "rxvt_scr_poweron()"));
 
+    /* mmc: why ?? */
     rxvt_scr_release(r);
-    r->h->prev_nrow = r->h->prev_ncol = 0;
+    r->h->prev_nrow = r->h->prev_ncol = 0; /* fixme: don't we leak? NO! */
     rxvt_scr_reset(r);
 
     rxvt_scr_clear(r);
@@ -549,6 +673,7 @@ rxvt_scr_change_screen(rxvt_t *r, int scrn)
     RESET_CHSTAT(r->h);
 
     if (r->h->current_screen == scrn)
+	/* mmc: we still have done something: the _CHSTAT ! and requested refresh! */
 	return r->h->current_screen;
 
     rxvt_selection_check(r, 2);	/* check for boundary cross */
@@ -556,7 +681,7 @@ rxvt_scr_change_screen(rxvt_t *r, int scrn)
     SWAP_IT(r->h->current_screen, scrn, int);
 #if NSCREENS
     r->h->num_scr = 0;
-    offset = r->TermWin.saveLines;
+    offset = r->TermWin.saveLines; /* (mmc:) number of lines that fit in scrollback */
     for (i = r->h->prev_nrow; i--;) {
 	SWAP_IT(r->screen.text[i + offset], r->swap.text[i], text_t *);
 	SWAP_IT(r->screen.tlen[i + offset], r->swap.tlen[i], int16_t);
@@ -575,9 +700,11 @@ rxvt_scr_change_screen(rxvt_t *r, int scrn)
 # endif
     SWAP_IT(r->screen.charset, r->swap.charset, int16_t);
     SWAP_IT(r->screen.flags, r->swap.flags, int);
+    /* mmc: ? */
     r->screen.flags |= Screen_VisibleCursor;
     r->swap.flags |= Screen_VisibleCursor;
 
+    /* mmc: i don't use it: */
     if (rxvt_Gr_Displayed(r)) {
 	rxvt_Gr_scroll(r, 0);
 	rxvt_Gr_ChangeScreen(r);
@@ -587,6 +714,7 @@ rxvt_scr_change_screen(rxvt_t *r, int scrn)
     if (rxvt_Gr_Displayed(r))
 	rxvt_Gr_ClearScreen(r);
     if (r->h->current_screen == PRIMARY && !rxvt_Gr_Displayed(r))
+	/* mmc:  prev_nrow ??  */
 	rxvt_scroll_text(r, 0, (r->h->prev_nrow - 1), r->h->prev_nrow, 0);
 # endif
 #endif
@@ -604,7 +732,7 @@ rxvt_scr_color(rxvt_t *r, unsigned int color, int fgbg)
     color &= RS_fgMask;
     if (fgbg == Color_fg)
 	r->h->rstyle = SET_FGCOLOR(r->h->rstyle, color);
-    else 
+    else
 	r->h->rstyle = SET_BGCOLOR(r->h->rstyle, color);
 }
 
@@ -641,11 +769,22 @@ rxvt_scroll_text(rxvt_t *r, int row1, int row2, int count, int spec)
     if (count == 0 || (row1 > row2))
 	return 0;
 
+#if 0
+    /* this function is on the memory image only! */
+    if (r->h->current_output == SECONDARY){
+        fprintf(stderr, "%s%s%s\n", color_yellow, __FUNCTION__, color_reset);
+        return;
+    }
+#endif
     r->h->want_refresh = 1;
-    D_SCREEN((stderr, "rxvt_scroll_text(%d,%d,%d,%d): %s", row1, row2, count, spec, (r->h->current_screen == PRIMARY) ? "Primary" : "Secondary"));
+    D_SCREEN((stderr, "rxvt_scroll_text(%d,%d,%d,%d): %s", row1, row2, count, spec,
+	      (r->h->current_screen == PRIMARY) ? "Primary" : "Secondary"));
 
     if ((count > 0) && (row1 == 0) && (r->h->current_screen == PRIMARY)) {
-	nscrolled = (long)r->TermWin.nscrolled + (long)count;;
+        /* the beginning/upper part of screen,  *UP*  */
+
+	nscrolled = (long)r->TermWin.nscrolled + (long)count;
+	/* note, that the cycling will result in some screen rows NULL! */
 	if (nscrolled > (long)r->TermWin.saveLines)
 	    r->TermWin.nscrolled = r->TermWin.saveLines;
 	else
@@ -678,9 +817,9 @@ rxvt_scroll_text(rxvt_t *r, int row1, int row2, int count, int spec)
     }
     rxvt_selection_check(r, 0);	/* _after_ r->TermWin.nscrolled update */
 
-    r->h->num_scr += count;
+    r->h->num_scr += count;     /* hint for HW scrolling? */
     j = count;
-    if (count < 0)
+    if (count < 0)              /* mmc: so easy?   note j keeps the original!*/
 	count = -count;
     i = row2 - row1 + 1;
     MIN_IT(count, i);
@@ -688,6 +827,7 @@ rxvt_scroll_text(rxvt_t *r, int row1, int row2, int count, int spec)
     if (j > 0) {
 /* A: scroll up */
 
+        /* mmc: if i wanted to shift/push the scrollBack? */
 /* A1: Copy lines that will get clobbered by the rotation */
 	for (i = 0, j = row1; i < count; i++, j++) {
 	    r->buf_text[i] = r->screen.text[j];
@@ -754,7 +894,8 @@ rxvt_scr_add_lines(rxvt_t *r, const unsigned char *str, int nlines, int len)
     h->want_refresh = 1;
     last_col = r->TermWin.ncol;
 
-    D_SCREEN((stderr, "rxvt_scr_add_lines(%d,%d)", nlines, len));
+    /* fprintf(stderr,"%s: %d %s\n", __FUNCTION__, nlines, str); */
+    /*mmc:  D_SCREEN((stderr, "rxvt_scr_add_lines(%d,%d)", nlines, len));*/
     ZERO_SCROLLBACK(r);
     if (nlines > 0) {
 	nlines += (r->screen.cur.row - r->screen.bscroll);
@@ -1111,7 +1252,7 @@ rxvt_scr_erase_line(rxvt_t *r, int mode)
 
     r->h->want_refresh = 1;
     D_SCREEN((stderr, "rxvt_scr_erase_line(%d) at screen row: %d", mode, r->screen.cur.row));
-    ZERO_SCROLLBACK(r);
+    ZERO_SCROLLBACK(r);         /* mmc: ? */
     RESET_CHSTAT(r->h);
     if (rxvt_Gr_Displayed(r))
 	rxvt_Gr_scroll(r, 0);
@@ -1119,6 +1260,8 @@ rxvt_scr_erase_line(rxvt_t *r, int mode)
 
     r->screen.flags &= ~Screen_WrapNext;
 
+    /* mmc: get col num as the interval to erase.
+     * This function does not clear physically, just in memory. */
     row = r->TermWin.saveLines + r->screen.cur.row;
     switch (mode) {
     case 0:			/* erase to end of line */
@@ -1147,12 +1290,16 @@ rxvt_scr_erase_line(rxvt_t *r, int mode)
     default:
 	return;
     }
+    /* mmc: fixme: I have to  */
     if (r->screen.text[row])
 	rxvt_blank_line(&(r->screen.text[row][col]),
 			&(r->screen.rend[row][col]), num, r->h->rstyle);
-    else
+    else {
+        fprintf(stderr, "%s: even resizing!\n", __FUNCTION__);
+        /* where does this happen? mallocs! */
 	rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend, row,
 			      r->h->rstyle);
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1172,16 +1319,19 @@ rxvt_scr_erase_screen(rxvt_t *r, int mode)
     XGCValues       gcvalue;
 
     r->h->want_refresh = 1;
-    D_SCREEN((stderr, "rxvt_scr_erase_screen(%d) at screen row: %d", mode, r->screen.cur.row));
+    D_SCREEN((stderr, "rxvt_scr_erase_screen(mode %d) at screen row: %d", mode, r->screen.cur.row));
     ZERO_SCROLLBACK(r);
     RESET_CHSTAT(r->h);
     row_offset = (int32_t)r->TermWin.saveLines;
+
+    /* mmc: In what follows we will need 2 row numbers: start and end of a region to "delete".
+     * The ->screen rows will be zeroed   from  `row' to row+num . */
 
     switch (mode) {
     case 0:			/* erase to end of screen */
 	rxvt_selection_check(r, 1);
 	rxvt_scr_erase_line(r, 0);
-	row = r->screen.cur.row + 1;	/* possible OOB */
+	row = r->screen.cur.row + 1;	/* possible OOB   out-of-bounds */
 	num = r->TermWin.nrow - row;
 	break;
     case 1:			/* erase to beginning of screen */
@@ -1192,14 +1342,16 @@ rxvt_scr_erase_screen(rxvt_t *r, int mode)
 	break;
     case 2:			/* erase whole screen */
 	rxvt_selection_check(r, 3);
-	rxvt_Gr_ClearScreen(r);
+	rxvt_Gr_ClearScreen(r); /* mmc: if (r->h->gr_root)
+				   this should put ->drawn_rend into need_redraw !*/
 	row = 0;
 	num = r->TermWin.nrow;
 	break;
     default:
 	return;
     }
-    r->h->refresh_type |= REFRESH_BOUNDS;
+    /* mmc: after this `mode' is not needed. */
+    r->h->refresh_type |= REFRESH_BOUNDS; /* mmc: ??? */
     if (r->selection.op && r->h->current_screen == r->selection.screen
 	&& ((r->selection.beg.row >= row && r->selection.beg.row <= row + num)
 	    || (r->selection.end.row >= row
@@ -1210,23 +1362,41 @@ rxvt_scr_erase_screen(rxvt_t *r, int mode)
     MIN_IT(num, (r->TermWin.nrow - row));
     if (r->h->rstyle & (RS_RVid | RS_Uline))
 	ren = (rend_t) ~RS_None;
-    else if (GET_BASEBG(r->h->rstyle) == Color_bg) {
+    /* mmc: should i disable it? */
+    else if (GET_BASEBG(r->h->rstyle) == Color_bg) { /* mmc: The color is the original background:*/
 	ren = DEFAULT_RSTYLE;
-	CLEAR_ROWS(row, num);
+	if (r->h->current_output == PRIMARY)
+	    /* mmc:  I could do it lazily: just mark...*/
+	    CLEAR_ROWS(row, num); /* mmc: and now we have to blank the memory! */
     } else {
+        /* the current bg style is different from the BG of the X window. */
 	ren = (r->h->rstyle & (RS_fgMask | RS_bgMask));
 	gcvalue.foreground = r->PixColors[GET_BGCOLOR(r->h->rstyle)];
 	XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, &gcvalue);
+
+#if mmc_debug
+        if (r->h->current_output == SECONDARY)
+            fprintf(stderr, "%s%s%s\n", color_red, __FUNCTION__, color_reset);
+#endif
 	ERASE_ROWS(row, num);
 	gcvalue.foreground = r->PixColors[Color_fg];
 	XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, &gcvalue);
     }
+
+#if mmc_debug
+    if (r->h->current_output == PRIMARY)
+            fprintf(stderr, "%s: marking DRAWN_* %d\n", __FUNCTION__, num * r->TermWin.ncol);
+#endif
     for (; num--; row++) {
 	rxvt_blank_screen_mem(r, r->screen.text, r->screen.rend,
 			      (unsigned int)(row + row_offset), r->h->rstyle);
 	r->screen.tlen[row + row_offset] = 0;
-	rxvt_blank_line(r->drawn_text[row], r->drawn_rend[row],
+	if (r->h->current_output == PRIMARY){
+	  /* since i skipped the CLEAR_ROWS, i have to mark it... `RS_needs_redraw' */
+	  rxvt_blank_line(r->drawn_text[row], r->drawn_rend[row],
 			(unsigned int)r->TermWin.ncol, ren);
+	    /*| RS_needs_redraw mmc: fixme:   should i set it  `RS_needs_redraw' ? */
+	}
     }
 }
 
@@ -1522,8 +1692,12 @@ rxvt_scr_rvideo_mode(rxvt_t *r, int mode)
 #if defined(TRANSPARENT)
 	    if (!(r->Options & Opt_transparent) || r->h->am_transparent == 0)
 #endif
+            {
+#if 0
 	    XSetWindowBackground(r->Xdisplay, r->TermWin.vt,
 				 r->PixColors[Color_bg]);
+#endif
+            }
 
 	gcvalue.foreground = r->PixColors[Color_fg];
 	gcvalue.background = r->PixColors[Color_bg];
@@ -1712,6 +1886,19 @@ enum {
     RC_COUNT
 };
 
+/*
+ * Fill explicitly, instead of relying on implicit fill by the X server (on Expose)
+ */
+void
+fill_area(Display* dpy, Drawable d, GC gc, int x, int y, int width, int height)
+{
+#if 0                           /* mmc_debug */
+    fprintf(stderr, "%s: filling %d,%d - %d,%d\n", __FUNCTION__, x, y, width, height);
+#endif
+    XFillRectangle(dpy, d, gc, x, y, width, height);
+}
+
+
 /* EXTPROTO */
 void
 rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
@@ -1721,9 +1908,38 @@ rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
 
     if (r->drawn_text == NULL)	/* sanity check */
 	return;
+#if 0
+    fprintf(stderr, "%s: %d x %d @ %d %d\n",
+            __FUNCTION__, width, height, x , y);
+#endif
+    /* mmc: I clean the top window outside the VT window. It used to be done by implicit background,
+     * now I have to explicitely  */
+    int mw = INTERNALBORDERWIDTH;
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 mw,  TermWin_TotalHeight());
 
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 TermWin_TotalWidth() -mw,
+		 0,
+		 mw, TermWin_TotalHeight());
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,TermWin_TotalHeight()-mw,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
+#if 0
+    fprintf(stderr, "%s: %d < %d, %d < %d\n",__FUNCTION__, x, (int)r->TermWin.int_bwidth,
+	    y,(int)r->TermWin.int_bwidth);
+#endif
 #ifdef DEBUG_STRICT
-    x = max(x, (int)r->TermWin.int_bwidth);
+    x = max(x, (int)r->TermWin.int_bwidth); /* mmc: ? */
     x = min(x, (int)r->TermWin.width);
     y = max(y, (int)r->TermWin.int_bwidth);
     y = min(y, (int)r->TermWin.height);
@@ -1736,18 +1952,44 @@ rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
     rc[PART_END].col = Pixel2Width(x + width + r->TermWin.fwidth - 1);
     rc[PART_END].row = Pixel2Row(y + height + r->TermWin.fheight - 1);
 
+#if 0
+    fprintf(stderr, "%s:so: %d -> %d, %d -> %d\n",__FUNCTION__, x, rc[PART_BEG].col, y, rc[PART_BEG].row);
+#endif
 /* sanity checks */
     for (i = PART_BEG; i < RC_COUNT; i++) {
 	MIN_IT(rc[i].col, r->TermWin.ncol - 1);
 	MIN_IT(rc[i].row, r->TermWin.nrow - 1);
     }
 
-    D_SCREEN((stderr, "rxvt_scr_expose(x:%d, y:%d, w:%d, h:%d) area (c:%d,r:%d)-(c:%d,r:%d)", x, y, width, height, rc[PART_BEG].col, rc[PART_BEG].row, rc[PART_END].col, rc[PART_END].row));
+    D_SCREEN((stderr, "rxvt_scr_expose(x:%d, y:%d, w:%d, h:%d) area (c:%d,r:%d)-(c:%d,r:%d)",
+	      x, y, width, height, rc[PART_BEG].col, rc[PART_BEG].row, rc[PART_END].col, rc[PART_END].row));
 
-    for (i = rc[PART_BEG].row; i <= rc[PART_END].row; i++)
+    /* mmc: This might be combined with  X Damage Extension? */
+#if 0
+    fprintf(stderr, "%s: rows: %d x %d --> %d %d:  %d columns! -> %s%d%s\n",
+	    __FUNCTION__,
+	    rc[PART_BEG].row, rc[PART_BEG].col,
+	    rc[PART_END].row, rc[PART_END].col,
+	    rc[PART_END].col - rc[PART_BEG].col + 1,
+	    color_green,
+	    (rc[PART_END].row - rc[PART_BEG].row) * (rc[PART_END].col - rc[PART_BEG].col + 1),
+	    color_reset
+	    );
+#endif
+    for (i = rc[PART_BEG].row; i <= rc[PART_END].row; i++) {
+	    /* mmc: RS_needs_redraw	 Is this the default background?  or rather it is empty	 drawn_rend ?  */
+	    /* mmc: todo:	i should set the ->drawn_rend  to  `RS_needs_redraw'*/
+
+#if 0
 	MEMSET(&(r->drawn_text[i][rc[PART_BEG].col]), 0,
 	       rc[PART_END].col - rc[PART_BEG].col + 1);
-
+#endif
+	{
+	    int j;
+	    for (j = rc[PART_BEG].col; j <=  rc[PART_END].col;j++)
+		r->drawn_rend[i][j] = RS_needs_redraw;
+	}
+    }
     if (refresh)
 	rxvt_scr_refresh(r, SLOW_REFRESH | REFRESH_BOUNDS);
 }
@@ -1799,7 +2041,8 @@ rxvt_scr_page(rxvt_t *r, enum page_dirn direction, int nlines)
     int             n;
     u_int16_t       oldviewstart;
 
-    D_SCREEN((stderr, "rxvt_scr_page(%s, %d) view_start:%d", ((direction == UP) ? "UP" : "DN"), nlines, r->TermWin.view_start));
+    D_SCREEN((stderr, "rxvt_scr_page(%s, %d) view_start:%d", ((direction == UP) ? "UP" : "DN"),
+	      nlines, r->TermWin.view_start));
 #ifdef DEBUG_STRICT
     assert((nlines >= 0) && (nlines <= r->TermWin.nrow));
 #endif
@@ -1887,26 +2130,10 @@ rxvt_scr_printscreen(rxvt_t *r, int fullhist)
  * r->screen.text/r->screen.rend contain what the screen will change to.
  */
 
-#define DRAW_STRING(Func, x, y, str, len)				\
-    Func(r->Xdisplay, drawBuffer, r->TermWin.gc, (x), (y), (str), (len))
-
-#if defined (NO_BRIGHTCOLOR) || defined (VERYBOLD)
-# define MONO_BOLD(x)		((x) & (RS_Bold|RS_Blink))
-# define MONO_BOLD_FG(x, fg)	MONO_BOLD(x)
-#else
-# define MONO_BOLD(x)						\
-    (((x) & (RS_Bold | RS_fgMask)) == (RS_Bold | Color_fg))
-# define MONO_BOLD_FG(x, fg)	(((x) & RS_Bold) && (fg) == Color_fg)
-#endif
-
-#define FONT_WIDTH(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].width
-#define FONT_RBEAR(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].rbearing
-#define FONT_LBEAR(X, Y)						\
-    (X)->per_char[(Y) - (X)->min_char_or_byte2].lbearing
-#define IS_FONT_CHAR(X, Y)						\
-    ((Y) >= (X)->min_char_or_byte2 && (Y) <= (X)->max_char_or_byte2)
+void redraw_matrix(rxvt_t *r,screen_t *screen, int row_offset, int top_row, int bottom_row,
+		   unsigned char *clearfirst, unsigned char *clearlast, int yoffset);
+#include "scroll.c"
+#include "scroll1.c"
 
 /* EXTPROTO */
 void
@@ -1915,54 +2142,34 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
     unsigned char   clearfirst,	/* first character writes before cell        */
 		    clearlast,	/* last character writes beyond cell         */
 		    must_clear,	/* use draw_string not draw_image_string     */
-#ifndef NO_BOLDFONT
-		    bfont,	/* we've changed font to bold font           */
-#endif
-		    rvid,	/* reverse video this position               */
 		    wbyte;	/* we're in multibyte                        */
     char            morecur = 0;/*                                           */
-#ifdef TTY_256COLOR
-    u_int16_t	    fore, back;	/* desired foreground/background             */
-#else
-    unsigned char   fore, back;	/* desired foreground/background             */
-#endif
-    int16_t         col, row,	/* column/row we're processing               */
-                    ocrow,	/* old cursor row                            */
-		    len, wlen;	/* text length screen/buffer                 */
-    int             i,		/* tmp                                       */
-		    row_offset;	/* basic offset in screen structure          */
+    int16_t         ocrow;	/* old cursor row                            */
+    int		    row_offset;	/* basic offset in screen structure          */
 #ifndef NO_CURSORCOLOR
     rend_t	    cc1;	/* store colours at cursor position(s)       */
 # ifdef MULTICHAR_SET
     rend_t          cc2;	/* store colours at cursor position(s)       */
+#else /* mmc: I have to keep this... */
+    rend_t          cc2;	/* store colours at cursor position(s)       */
 # endif
 #endif
-    XGCValues       gcvalue;	/* Graphics Context values                   */
-    rend_t         *drp, *srp;	/* drawn-rend-pointer, screen-rend-pointer   */
-    text_t         *dtp, *stp;	/* drawn-text-pointer, screen-text-pointer   */
-    char           *buffer;	/* local copy of r->h->buffer                */
     struct rxvt_hidden *h = r->h;
-    int             (*draw_string) () = XDrawString;
-    int             (*draw_image_string) () = XDrawImageString;
+    screen_t *screen, *main_screen;
 
     if (refresh_type == NO_REFRESH || !r->TermWin.mapped)
 	return;
 
+    main_screen = &(r->screen);
+    screen = &(r->screen);
 /*
  * A: set up vars
  */
     clearfirst = clearlast = must_clear = wbyte = 0;
-#ifndef NO_BOLDFONT
-    bfont = 0;
-#endif
 
-    if (h->currmaxcol < r->TermWin.ncol) {
-	h->currmaxcol = r->TermWin.ncol;
-	h->buffer = rxvt_realloc(h->buffer, sizeof(char) * (h->currmaxcol + 1));
-    }
-    buffer = h->buffer;
     h->refresh_count = 0;
 
+    /* mmc:  This illustrates well the role of:   .`view_start'!  */
     row_offset = r->TermWin.saveLines - r->TermWin.view_start;
 /*
  * always go back to the base font - it's much safer
@@ -1981,539 +2188,45 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
 #endif
     ocrow = h->oldcursor.row; /* is there an old outline cursor on screen? */
 
-    /* set base colours to avoid check in "single glyph writing" below */
-    gcvalue.foreground = r->PixColors[Color_fg];
-    gcvalue.background = r->PixColors[Color_bg];
+    /* This is my trick to have a frozen snapshot to display,
+       while the app does a series of complex updates. */
+    if (r->h->current_output == SECONDARY)
+        exchange_snapshot_screen(r, row_offset);
 
 /*
  * B: reverse any characters which are selected
  */
-    rxvt_scr_reverse_selection(r);
+    rxvt_scr_reverse_selection(r); /* mmc? it's XOR:  applied twice cancels!
+                                    * modifies r->screen.rend  !! */
 
 /*
  * C: set the cursor character(s)
  */
-    {
-	unsigned char   setoldcursor;
-	rend_t          ccol1,	/* Cursor colour       */
-	                ccol2;	/* Cursor colour2      */
+    /* mmc: This overwrites the *desired* matrix to contain the cursor at correct position. */
+    set_cursor_characters(r,main_screen, screen, &cc1, &cc2, ocrow, &morecur);
 
-	if ((r->screen.flags & Screen_VisibleCursor) && r->TermWin.focus) {
-	    srp = &(r->screen.rend[r->screen.cur.row + r->TermWin.saveLines]
-				  [r->screen.cur.col]);
-	    *srp ^= RS_RVid;
-#ifndef NO_CURSORCOLOR
-	    cc1 = *srp & (RS_fgMask | RS_bgMask);
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor))
-		ccol1 = Color_cursor;
-	    else
-#ifdef CURSOR_COLOR_IS_RENDITION_COLOR
-		ccol1 = GET_FGCOLOR(h->rstyle);
-#else
-		ccol1 = Color_fg;
-#endif
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor))
-		ccol2 = Color_cursor2;
-	    else
-#ifdef CURSOR_COLOR_IS_RENDITION_COLOR
-		ccol2 = GET_BGCOLOR(h->rstyle);
-#else
-		ccol2 = Color_bg;
-#endif
-	    *srp = SET_FGCOLOR(*srp, ccol1);
-	    *srp = SET_BGCOLOR(*srp, ccol2);
-#endif
-#ifdef MULTICHAR_SET
-	    if (IS_MULTI1(*srp)) {
-		if (r->screen.cur.col < r->TermWin.ncol - 2
-		    && IS_MULTI2(*++srp))
-		    morecur = 1;
-	    } else if (IS_MULTI2(*srp)) {
-		if (r->screen.cur.col > 0 && IS_MULTI1(*--srp))
-		    morecur = -1;
-	    }
-	    if (morecur) {
-		*srp ^= RS_RVid;
-# ifndef NO_CURSORCOLOR
-		cc2 = *srp & (RS_fgMask | RS_bgMask);
-		*srp = SET_FGCOLOR(*srp, ccol1);
-		*srp = SET_BGCOLOR(*srp, ccol2);
-# endif
-	    }
-#endif
+    if (r->h->check_for_scrolling) /* I don't do it always. Only when the snapshot is just switched
+				      off.*/
+	{
+	    /* fixme: Maybe do it in the caller(s)? */
+	    r->h->check_for_scrolling = 0;
+	    try_to_scroll_smoothly(r, row_offset);
 	}
-
-	/* make sure no outline cursor is left around */
-	setoldcursor = 0;
-	if (ocrow != -1) {
-	    if (r->screen.cur.row + r->TermWin.view_start != ocrow
-		|| r->screen.cur.col != h->oldcursor.col) {
-		if (ocrow < r->TermWin.nrow
-		    && h->oldcursor.col < r->TermWin.ncol) {
-		    r->drawn_rend[ocrow][h->oldcursor.col] ^= (RS_RVid | RS_Uline);
-#ifdef MULTICHAR_SET
-		    if (h->oldcursormulti) {
-			col = h->oldcursor.col + h->oldcursormulti;
-			if (col < r->TermWin.ncol)
-			    r->drawn_rend[ocrow][col] ^= (RS_RVid | RS_Uline);
-		    }
-#endif
-		}
-		if (r->TermWin.focus
-		    || !(r->screen.flags & Screen_VisibleCursor))
-		    h->oldcursor.row = -1;
-		else
-		    setoldcursor = 1;
-	    }
-	} else if (!r->TermWin.focus)
-	    setoldcursor = 1;
-	if (setoldcursor) {
-	    if (r->screen.cur.row + r->TermWin.view_start >= r->TermWin.nrow)
-		h->oldcursor.row = -1;
-	    else {
-		h->oldcursor.row = r->screen.cur.row + r->TermWin.view_start;
-		h->oldcursor.col = r->screen.cur.col;
-#ifdef MULTICHAR_SET
-		h->oldcursormulti = morecur;
-#endif
-	    }
-	}
-    }
 
 #ifndef NO_SLOW_LINK_SUPPORT
-/*
- * D: CopyArea pass - very useful for slower links
- *    This has been deliberately kept simple.
- */
-    i = h->num_scr;
-    if (refresh_type == FAST_REFRESH && h->num_scr_allow && i
-	&& abs(i) < r->TermWin.nrow && !must_clear) {
-	int16_t         nits;
-	int             j;
-	rend_t         *drp2;
-	text_t         *dtp2;
+    refresh_type = try_to_scroll(r, refresh_type, screen, must_clear, row_offset, ocrow);
+#endif /* NO_SLOW_LINK_SUPPORT */
 
-	j = r->TermWin.nrow;
-	wlen = len = -1;
-	row = i > 0 ? 0 : j - 1;
-	for (; j-- >= 0; row += (i > 0 ? 1 : -1)) {
-	    if (row + i >= 0 && row + i < r->TermWin.nrow && row + i != ocrow) {
-		stp = r->screen.text[row + row_offset];
-		srp = r->screen.rend[row + row_offset];
-		dtp = r->drawn_text[row];
-		dtp2 = r->drawn_text[row + i];
-		drp = r->drawn_rend[row];
-		drp2 = r->drawn_rend[row + i];
-		for (nits = 0, col = r->TermWin.ncol; col--; )
-		    if (stp[col] != dtp2[col] || srp[col] != drp2[col])
-			nits--;
-		    else if (stp[col] != dtp[col] || srp[col] != drp[col])
-			nits++;
-		if (nits > 8) {	/* XXX: arbitrary choice */
-		    for (col = r->TermWin.ncol; col--; ) {
-			*dtp++ = *dtp2++;
-			*drp++ = *drp2++;
-		    }
-		    if (len == -1)
-			len = row;
-		    wlen = row;
-		    continue;
-		}
-	    }
-	    if (len != -1) {
-		/* also comes here at end if needed because of >= above */
-		if (wlen < len)
-		    SWAP_IT(wlen, len, int);
-		D_SCREEN((stderr, "rxvt_scr_refresh(): XCopyArea: %d -> %d (height: %d)", len + i, len, wlen - len + 1));
-		XCopyArea(r->Xdisplay, r->TermWin.vt, r->TermWin.vt,
-			  r->TermWin.gc, 0, Row2Pixel(len + i),
-			  (unsigned int)TermWin_TotalWidth(),
-			  (unsigned int)Height2Pixel(wlen - len + 1),
-			  0, Row2Pixel(len));
-		len = -1;
-	    }
-	}
+    /* bug: nrow is wrong wrt screen->rend */
+    redraw_matrix(r, screen, row_offset, 0,r->TermWin.nrow, &clearfirst, &clearlast, 0);
+
+/*
+ * G: cleanup cursor and display outline cursor if necessary
+ */
+    if (main_screen->flags & Screen_VisibleCursor) {
+	cleanup_cursor_and_outline(r, screen, cc1,cc2, morecur);
     }
-#endif
 
-
-/*
- * E: main pass across every character
- */
-    for (row = 0; row < r->TermWin.nrow; row++) {
-	unsigned char   clear_next = 0;
-	int             j,
-			xpixel,	 /* x offset for start of drawing (font) */
-		        ypixel,	 /* y offset for start of drawing (font) */
-		        ypixelc; /* y offset for top of drawing          */
-	unsigned long   gcmask;	 /* Graphics Context mask                */
-	const XFontStruct *wf;	/* which font are we in                      */
-
-	stp = r->screen.text[row + row_offset];
-	srp = r->screen.rend[row + row_offset];
-	dtp = r->drawn_text[row];
-	drp = r->drawn_rend[row];
-
-#ifndef NO_PIXEL_DROPPING_AVOIDANCE
-/*
- * E1: pixel dropping avoidance.  Do this before the main refresh on the line.
- *     Require a refresh where pixels may have been dropped into our
- *     area by a neighbour character which has now changed
- *     TODO: this could be integrated into E2 but might be too messy
- */
-# ifdef NO_BOLDFONT
-	wf = r->TermWin.font;
-# endif
-	for (col = 0; col < r->TermWin.ncol; col++) {
-	    unsigned char   is_font_char, is_same_char;
-	    text_t          t;
-
-	    t = dtp[col];
-	    is_same_char = (t == stp[col] && drp[col] == srp[col]);
-	    if (!clear_next
-		&& (is_same_char
-		    || t == 0	/* screen cleared elsewhere */
-		    || t == ' '))
-		continue;
-
-	    if (clear_next) {	/* previous char caused change here */
-		clear_next = 0;
-		dtp[col] = 0;
-		if (is_same_char)	/* don't cascade into next char */
-		    continue;
-	    }
-	    j = MONO_BOLD(drp[col]) ? 1 : 0;
-# ifndef NO_BOLDFONT
-	    wf = (j && r->TermWin.boldFont) ? r->TermWin.boldFont
-					    : r->TermWin.font;
-# endif
-/*
- * TODO: consider if anything special needs to happen with:
- * #if defined(MULTICHAR_SET) && ! defined(NO_BOLDOVERSTRIKE_MULTI)
- */
-	    is_font_char = (wf->per_char && IS_FONT_CHAR(wf, t)) ? 1 : 0;
-	    if (!is_font_char || FONT_LBEAR(wf, t) < 0) {
-		if (col == 0)
-		    clearfirst = 1;
-		else
-		    dtp[col - 1] = 0;
-	    }
-	    if (!is_font_char
-		|| (FONT_WIDTH(wf, t) < (FONT_RBEAR(wf, t) + j))) {
-		if (col == r->TermWin.ncol - 1)
-		    clearlast = 1;
-		else
-		    clear_next = 1;
-	    }
-	}
-#endif				/* NO_PIXEL_DROPPING_AVOIDANCE */
-
-/*
- * E2: OK, now the real pass
- */
-	ypixelc = (int)Row2Pixel(row);
-	ypixel = ypixelc + r->TermWin.font->ascent;
-
-	for (col = 0; col < r->TermWin.ncol; col++) {
-	    unsigned char   fontdiff,/* current font size != base font size */
-			    fprop;   /* proportional font used              */
-	    rend_t          rend;    /* rendition value                     */
-
-	    /* compare new text with old - if exactly the same then continue */
-	    rend = srp[col];	/* screen rendition (target rendtion) */
-	    if (stp[col] == dtp[col]	/* Must match characters to skip. */
-		&& (rend == drp[col]	/* Either rendition the same or   */
-		    || (stp[col] == ' '	/* space w/ no background change  */
-			&& GET_BGATTR(rend) == GET_BGATTR(drp[col])))) {
-		if (!IS_MULTI1(rend))
-		    continue;
-#ifdef MULTICHAR_SET
-		else {	/* first byte is Kanji so compare second bytes */
-		    if (stp[col + 1] == dtp[col + 1]) {
-		    /* assume no corrupt characters on the screen */
-			col++;
-			continue;
-		    }
-		}
-#endif
-	    }
-	    /* redraw one or more characters */
-
-	    fontdiff = 0;
-	    len = 0;
-	    buffer[len++] = dtp[col] = stp[col];
-	    drp[col] = rend;
-	    xpixel = Col2Pixel(col);
-
-/*
- * Find out the longest string we can write out at once
- */
-#ifndef NO_BOLDFONT
-	    if (MONO_BOLD(rend) && r->TermWin.boldFont != NULL)
-		fprop = (r->TermWin.propfont & PROPFONT_BOLD);
-	    else
-#endif
-	    fprop = (r->TermWin.propfont & PROPFONT_NORMAL);
-#ifdef MULTICHAR_SET
-	    if (IS_MULTI1(rend)
-		&& col < r->TermWin.ncol - 1 && IS_MULTI2(srp[col + 1])) {
-		if (!wbyte && r->TermWin.mfont) {
-		    wbyte = 1;
-		    XSetFont(r->Xdisplay, r->TermWin.gc,
-			     r->TermWin.mfont->fid);
-		    fontdiff = (r->TermWin.propfont & PROPFONT_MULTI);
-		    draw_string = XDrawString16;
-		    draw_image_string = XDrawImageString16;
-		}
-		if (r->TermWin.mfont == NULL) {
-		    buffer[0] = buffer[1] = ' ';
-		    len = 2;
-		    col++;
-		} else {
-		    /* double stepping - we're in multibyte font mode */
-		    for (; ++col < r->TermWin.ncol;) {
-			/* XXX: could check sanity on 2nd byte */
-			dtp[col] = stp[col];
-			drp[col] = srp[col];
-			buffer[len++] = stp[col];
-			col++;
-			if (fprop)	/* proportional multibyte font mode */
-			    break;
-			if ((col == r->TermWin.ncol) || (srp[col] != rend))
-			    break;
-			if ((stp[col] == dtp[col])
-			    && (srp[col] == drp[col])
-			    && (stp[col + 1] == dtp[col + 1]))
-			    break;
-			if (len == h->currmaxcol)
-			    break;
-			dtp[col] = stp[col];
-			drp[col] = srp[col];
-			buffer[len++] = stp[col];
-		    }
-		    col--;
-		}
-		if (buffer[0] & 0x80)
-		    (h->multichar_decode)(buffer, len);
-		wlen = len / 2;
-	    } else {
-		if (rend & RS_multi1) {
-		    /* corrupt character - you're outta there */
-		    rend &= ~RS_multiMask;
-		    drp[col] = rend;	/* TODO check: may also want */
-		    dtp[col] = ' ';	/* to poke into stp/srp      */
-		    buffer[0] = ' ';
-		}
-		if (wbyte) {
-		    wbyte = 0;
-		    XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.font->fid);
-		    draw_string = XDrawString;
-		    draw_image_string = XDrawImageString;
-		}
-#else
-	    {
-#endif
-		if (!fprop) {
-		    /* single stepping - `normal' mode */
-		    for (i = 0; ++col < r->TermWin.ncol - 1;) {
-			if (rend != srp[col])
-			    break;
-			buffer[len++] = stp[col];
-			if ((stp[col] != dtp[col]) || (srp[col] != drp[col])) {
-			    if (must_clear && (i++ > (len / 2)))
-				break;
-			    dtp[col] = stp[col];
-			    drp[col] = srp[col];
-			    i = 0;
-			} else if (must_clear || (stp[col] != ' ' && ++i > 32))
-			    break;
-		    }
-		    col--;	/* went one too far.  move back */
-		    len -= i;	/* dump any matching trailing chars */
-		}
-		wlen = len;
-	    }
-	    buffer[len] = '\0';
-
-/*
- * Determine the attributes for the string
- */
-	    fore = GET_FGCOLOR(rend);
-	    back = GET_BGCOLOR(rend);
-	    rend = GET_ATTR(rend);
-
-	    switch (rend & RS_fontMask) {
-	    case RS_acsFont:
-		for (i = 0; i < len; i++)
-		    if (buffer[i] == 0x5f)
-			buffer[i] = 0x7f;
-		    else if (buffer[i] > 0x5f && buffer[i] < 0x7f)
-			buffer[i] -= 0x5f;
-		break;
-	    case RS_ukFont:
-		for (i = 0; i < len; i++)
-		    if (buffer[i] == '#')
-			buffer[i] = 0x1e;	/* pound sign */
-		break;
-	    }
-
-	    rvid = (rend & RS_RVid) ? 1 : 0;
-#ifdef OPTION_HC
-	    if (!rvid && (rend & RS_Blink)) {
-		if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_HC)
-		    && r->PixColors[fore] != r->PixColors[Color_HC]
-		    && r->PixColors[back] != r->PixColors[Color_HC])
-		    back = Color_HC;
-		else
-		    rvid = !rvid;	/* fall back */
-	    }
-#endif
-	    if (rvid) {
-#ifdef TTY_256COLOR
-		SWAP_IT(fore, back, u_int16_t);
-#else
-		SWAP_IT(fore, back, unsigned char);
-#endif
-#ifndef NO_BOLD_UNDERLINE_REVERSE
-		if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_RV)
-		    && r->PixColors[fore] != r->PixColors[Color_RV])
-		    back = Color_RV;
-#endif
-	    }
-	    gcmask = 0;
-	    if (back != Color_bg) {
-		gcvalue.background = r->PixColors[back];
-		gcmask = GCBackground;
-	    }
-	    if (fore != Color_fg) {
-		gcvalue.foreground = r->PixColors[fore];
-		gcmask |= GCForeground;
-	    }
-#ifndef NO_BOLD_UNDERLINE_REVERSE
-	    else if (rend & RS_Bold) {
-		if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_BD)
-		    && r->PixColors[fore] != r->PixColors[Color_BD]
-		    && r->PixColors[back] != r->PixColors[Color_BD]) {
-		    gcvalue.foreground = r->PixColors[Color_BD];
-		    gcmask |= GCForeground;
-# ifndef VERYBOLD
-		    rend &= ~RS_Bold;	/* we've taken care of it */
-# endif
-		}
-	    } else if (rend & RS_Uline) {
-		if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_UL)
-		    && r->PixColors[fore] != r->PixColors[Color_UL]
-		    && r->PixColors[back] != r->PixColors[Color_UL]) {
-		    gcvalue.foreground = r->PixColors[Color_UL];
-		    gcmask |= GCForeground;
-		    rend &= ~RS_Uline;	/* we've taken care of it */
-		}
-	    }
-#endif
-	    if (gcmask)
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-#ifndef NO_BOLDFONT
-	    if (!wbyte && MONO_BOLD_FG(rend, fore)
-		&& r->TermWin.boldFont != NULL) {
-		bfont = 1;
-		XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.boldFont->fid);
-		fontdiff = (r->TermWin.propfont & PROPFONT_BOLD);
-		rend &= ~RS_Bold;	/* we've taken care of it */
-	    } else if (bfont) {
-		bfont = 0;
-		XSetFont(r->Xdisplay, r->TermWin.gc, r->TermWin.font->fid);
-	    }
-#endif
-/*
- * Actually do the drawing of the string here
- */
-	    if (back == Color_bg && must_clear) {
-		CLEAR_CHARS(xpixel, ypixelc, len);
-		for (i = 0; i < len; i++)	/* don't draw empty strings */
-		    if (buffer[i] != ' ') {
-			DRAW_STRING(draw_string, xpixel, ypixel, buffer, wlen);
-			break;
-		    }
-	    } else if (fprop || fontdiff) {	/* single glyph writing */
-		unsigned long   gctmp;
-
-		gctmp = gcvalue.foreground;
-		gcvalue.foreground = gcvalue.background;
-		XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, &gcvalue);
-		XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,
-			       xpixel, ypixelc, (unsigned int)Width2Pixel(len),
-			       (unsigned int)(Height2Pixel(1)
-					      - r->TermWin.lineSpace));
-		gcvalue.foreground = gctmp;
-		XChangeGC(r->Xdisplay, r->TermWin.gc, GCForeground, &gcvalue);
-		DRAW_STRING(draw_string, xpixel, ypixel, buffer, wlen);
-	    } else
-		DRAW_STRING(draw_image_string, xpixel, ypixel, buffer, wlen);
-
-#ifndef NO_BOLDOVERSTRIKE
-# ifdef NO_BOLDOVERSTRIKE_MULTI
-	    if (!wbyte)
-# endif
-		if (MONO_BOLD_FG(rend, fore))
-		    DRAW_STRING(draw_string, xpixel + 1, ypixel, buffer, wlen);
-#endif
-	    if ((rend & RS_Uline) && (r->TermWin.font->descent > 1))
-		XDrawLine(r->Xdisplay, drawBuffer, r->TermWin.gc,
-			  xpixel, ypixel + 1,
-			  xpixel + Width2Pixel(len) - 1, ypixel + 1);
-	    if (gcmask) {	/* restore normal colours */
-		gcvalue.foreground = r->PixColors[Color_fg];
-		gcvalue.background = r->PixColors[Color_bg];
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-	    }
-	}			/* for (col....) */
-    }				/* for (row....) */
-
-/*
- * G: cleanup cursor and display outline cursor in necessary
- */
-    if (r->screen.flags & Screen_VisibleCursor) {
-	if (r->TermWin.focus) {
-	    srp = &(r->screen.rend[r->screen.cur.row + r->TermWin.saveLines]
-				  [r->screen.cur.col]);
-	    *srp ^= RS_RVid;
-#ifndef NO_CURSORCOLOR
-	    *srp = (*srp & ~(RS_fgMask | RS_bgMask)) | cc1;
-#endif
-#ifdef MULTICHAR_SET
-	    if (morecur) {
-		srp += morecur;
-		*srp ^= RS_RVid;
-# ifndef NO_CURSORCOLOR
-		*srp = (*srp & ~(RS_fgMask | RS_bgMask)) | cc2;
-# endif
-	    }
-#endif
-	} else if (h->oldcursor.row >= 0) {
-#ifndef NO_CURSORCOLOR
-	    unsigned long   gcmask;	/* Graphics Context mask */
-
-	    gcmask = 0;
-	    if (XDEPTH > 2 && ISSET_PIXCOLOR(h, Color_cursor)) {
-		gcvalue.foreground = r->PixColors[Color_cursor];
-		gcmask = GCForeground;
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-		gcvalue.foreground = r->PixColors[Color_fg];
-	    }
-#endif
-	    XDrawRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,
-			   Col2Pixel(h->oldcursor.col + morecur),
-			   Row2Pixel(h->oldcursor.row),
-			   (unsigned int)(Width2Pixel(1 + (morecur ? 1 : 0))
-					  - 1),
-			   (unsigned int)(Height2Pixel(1)
-					  - r->TermWin.lineSpace - 1));
-#ifndef NO_CURSORCOLOR
-	    if (gcmask)		/* restore normal colours */
-		XChangeGC(r->Xdisplay, r->TermWin.gc, gcmask, &gcvalue);
-#endif
-	}
-    }
 /*
  * H: cleanup selection
  */
@@ -2522,29 +2235,23 @@ rxvt_scr_refresh(rxvt_t *r, unsigned char refresh_type)
 /*
  * I: other general cleanup
  */
-    if (clearfirst && r->TermWin.int_bwidth)
-	/* 
-	 * clear the whole screen height, note that width == 0 is treated
-	 * specially by XClearArea
-	 */
-	XClearArea(r->Xdisplay, r->TermWin.vt, 0, 0,
-		   (unsigned int)r->TermWin.int_bwidth,
-		   (unsigned int)TermWin_TotalHeight(), False);
-    if (clearlast && r->TermWin.int_bwidth)
-	/* 
-	 * clear the whole screen height, note that width == 0 is treated
-	 * specially by XClearArea
-	 */
-	XClearArea(r->Xdisplay, r->TermWin.vt,
-		   r->TermWin.width + r->TermWin.int_bwidth, 0,
-		   (unsigned int)r->TermWin.int_bwidth,
-		   (unsigned int)TermWin_TotalHeight(), False);
+    clear_borders(r, clearfirst, clearlast);
+    D_SCREEN((stderr, "\\______%s (END) %s", __FUNCTION__, (refresh_type & SMOOTH_REFRESH)?"sync":""));
     if (refresh_type & SMOOTH_REFRESH)
 	XSync(r->Xdisplay, False);
+    else {
+	XFlush(r->Xdisplay);
+    }
 
     h->num_scr = 0;
     h->num_scr_allow = 1;
     h->want_refresh = 0;	/* screen is current */
+    /* test_all_updated(r);*/
+    if (r->h->current_output == SECONDARY)
+        {
+            /* And switch it back: */
+            exchange_snapshot_screen(r, row_offset);
+        }
 }
 /* ------------------------------------------------------------------------- */
 
@@ -2555,7 +2262,7 @@ rxvt_scr_clear(rxvt_t *r)
     if (!r->TermWin.mapped)
 	return;
     r->h->num_scr_allow = 0;
-    r->h->want_refresh = 1;
+    r->h->want_refresh = FAST_REFRESH;
 #ifdef TRANSPARENT
     if ((r->Options & Opt_transparent) && (r->h->am_pixmap_trans == 0)) {
 	int             i;
@@ -2569,7 +2276,9 @@ rxvt_scr_clear(rxvt_t *r)
 		XClearWindow(r->Xdisplay, r->TermWin.parent[i]);
     }
 #endif
+#if 0                           /* mmc */
     XClearWindow(r->Xdisplay, r->TermWin.vt);
+#endif
 }
 
 /* ------------------------------------------------------------------------- */
