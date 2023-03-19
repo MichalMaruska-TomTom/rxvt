@@ -1627,7 +1627,7 @@ rxvt_get_ttymode(ttymode_t *tio)
     if (ioctl(STDIN_FILENO, TIOCGLTC, &(tio->lc)) < 0) {
 	tio->lc.t_suspc = CSUSP;	/* ^Z */
 	tio->lc.t_dsuspc = CDSUSP;	/* ^Y */
-	tio->lc.t_rprntc = CRPRNT;	/* ^R */
+	tio->lc.t_rprntc = CRPRNT;	/* ^T */
 	tio->lc.t_flushc = CFLUSH;	/* ^O */
 	tio->lc.t_werasc = CWERASE;	/* ^W */
 	tio->lc.t_lnextc = CLNEXT;	/* ^V */

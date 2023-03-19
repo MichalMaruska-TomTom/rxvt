@@ -2538,7 +2538,7 @@ rxvt_selection_property(rxvt_t *r, Window win, Atom prop)
 }
 /* ------------------------------------------------------------------------- */
 /*
- * Request the current selection: 
+ * Request the current selection:
  * Order: > internal selection if available
  *        > PRIMARY, SECONDARY, CLIPBOARD if ownership is claimed (+)
  *        > CUT_BUFFER0
@@ -2569,6 +2569,9 @@ rxvt_selection_request(rxvt_t *r, Time tm, int x, int y)
 #else
 	    r->h->selection_type = 0;
 #endif
+	    if (i == Sel_Secondary)
+	      continue;
+
 	    if (rxvt_selection_request_other(r,
 #ifdef MULTICHAR_SET
 					     r->h->xa[XA_COMPOUND_TEXT],
@@ -2600,6 +2603,7 @@ rxvt_selection_request_other(rxvt_t *r, Atom target, int selnum)
 	sel = XA_SECONDARY;
     else
 	sel = r->h->xa[XA_CLIPBOARD];
+
     if (XGetSelectionOwner(r->Xdisplay, sel) != None) {
 	D_SELECT((stderr, "rxvt_selection_request_other: pasting %s", debug_xa_names[selnum]));
 	XConvertSelection(r->Xdisplay, sel, target, r->h->xa[XA_VT_SELECTION],
@@ -2627,6 +2631,47 @@ rxvt_selection_clear(rxvt_t *r)
     r->selection.len = 0;
     CLEAR_SELECTION(r);
 }
+
+int
+assert_single_selection(Display* display, Window window, Atom atom, const char* name, Time tm)
+{
+  Window owner;
+  int res;
+  res = XSetSelectionOwner(display, atom, window, tm);
+  XFlush(display);
+  if ((owner = XGetSelectionOwner(display, atom)) != window) {
+      rxvt_print_error("can't set %s selection %x (%d) time %lu", name, owner, res, tm);
+      return FALSE;
+  }
+  return TRUE;
+}
+
+/* EXTPROTO */
+void
+rxvt_assert_selection(rxvt_t *r, const char* new_selection_text, int len, Time tm,
+		      int ownership)
+{
+    /* text is owned by r, and will be freed in the future, on the next call here. */
+    if (! ownership)
+	new_selection_text = strdup(new_selection_text); /* use the len */
+
+    r->selection.len = len;
+    if (r->selection.text)
+	free(r->selection.text);
+    r->selection.text = (char*) new_selection_text; /* fixme! discards const fixed. */
+
+    // this atom is reserved
+    if (assert_single_selection(r->Xdisplay, r->TermWin.parent[0], XA_PRIMARY, "primary", tm))
+	/* This is problematic? */
+	r->h->selection_time = tm;
+    if (assert_single_selection(r->Xdisplay, r->TermWin.vt, r->h->xa[XA_CLIPBOARD], "clipboard", tm))
+	r->h->selection_time = tm;
+
+    /* mmc:  I would rather use XStoreBytes(dpy, "a123456789", 10); */
+    XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
+		    PropModeReplace, r->selection.text, (int)r->selection.len);
+}
+
 
 /* ------------------------------------------------------------------------- */
 /*
@@ -2707,17 +2752,8 @@ rxvt_selection_make(rxvt_t *r, Time tm)
 	free(new_selection_text);
 	return;
     }
-    r->selection.len = i;
-    if (r->selection.text)
-	free(r->selection.text);
-    r->selection.text = new_selection_text;
-
-    XSetSelectionOwner(r->Xdisplay, XA_PRIMARY, r->TermWin.vt, tm);
-    if (XGetSelectionOwner(r->Xdisplay, XA_PRIMARY) != r->TermWin.vt)
-	rxvt_print_error("can't get primary selection");
-    XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
-		    PropModeReplace, r->selection.text, (int)r->selection.len);
-    r->h->selection_time = tm;
+    /* mmc: This sets a new selection:  */
+    rxvt_assert_selection(r, new_selection_text, i, tm, 1);
     D_SELECT((stderr, "rxvt_selection_make(): r->selection.len=%d", r->selection.len));
 }
 

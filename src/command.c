@@ -116,6 +116,14 @@ rxvt_lookup_key(rxvt_t *r, XKeyEvent *ev)
     if (valid_keysym)
 #endif
     {
+	/* C-M-y pastes the selection. */
+	if (ctrl && meta) {
+	    if (keysym == XK_y) {
+		rxvt_selection_request(r, ev->time, 0, 0);
+		return ;
+	    }
+	}
+
 /* for some backwards compatibility */
 #if defined(HOTKEY_CTRL) || defined(HOTKEY_META)
 # ifdef HOTKEY_CTRL
@@ -2602,6 +2610,7 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
 	rxvt_set_iconName(r, str);
 	break;
     case XTerm_set_selection:
+	rxvt_assert_selection(r, str, strlen(str), CurrentTime, 0);
 	break;
     case XTerm_set_gravity:
 	break;
