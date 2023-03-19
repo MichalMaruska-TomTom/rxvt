@@ -2919,6 +2919,15 @@ rxvt_selection_clear(rxvt_t *r)
     CLEAR_SELECTION(r);
 }
 
+int
+assert_single_selection(Display* display, Window window, Atom atom, const char* name, Time tm)
+{
+  int res;
+  res = XSetSelectionOwner(display, atom, window, tm);
+  XFlush(display);
+  return TRUE;
+}
+
 /* EXTPROTO */
 void
 rxvt_assert_selection(rxvt_t *r, const char* new_selection_text, int len, Time tm,
@@ -2933,20 +2942,16 @@ rxvt_assert_selection(rxvt_t *r, const char* new_selection_text, int len, Time t
 	free(r->selection.text);
     r->selection.text = (char*) new_selection_text; /* fixme! discards const fixed. */
 
-    XSetSelectionOwner(r->Xdisplay, XA_PRIMARY, r->TermWin.vt, tm);
-    if (XGetSelectionOwner(r->Xdisplay, XA_PRIMARY) != r->TermWin.vt)
-	rxvt_print_error("can't get primary selection");
-
-    XSetSelectionOwner(r->Xdisplay,  r->h->xa[XA_CLIPBOARD], r->TermWin.vt, tm);
-    if (XGetSelectionOwner(r->Xdisplay, r->h->xa[XA_CLIPBOARD]) != r->TermWin.vt)
-      rxvt_print_error("can't set %s selection", "clipboard");
+    // this atom is reserved
+    if (assert_single_selection(r->Xdisplay, r->TermWin.parent[0], XA_PRIMARY, "primary", tm))
+	/* This is problematic? */
+	r->h->selection_time = tm;
+    if (assert_single_selection(r->Xdisplay, r->TermWin.vt, r->h->xa[XA_CLIPBOARD], "clipboard", tm))
+	r->h->selection_time = tm;
 
     /* mmc:  I would rather use XStoreBytes(dpy, "a123456789", 10); */
     XChangeProperty(r->Xdisplay, Xroot, XA_CUT_BUFFER0, XA_STRING, 8,
 		    PropModeReplace, r->selection.text, (int)r->selection.len);
-
-    /* This is problematic? */
-    r->h->selection_time = tm;
 }
 
 
