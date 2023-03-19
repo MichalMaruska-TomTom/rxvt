@@ -102,23 +102,37 @@ const KNOWN_ENCODINGS known_encodings[] = {
  */
 #define drawBuffer	(r->TermWin.vt)
 
+/* mmc: Since I set the background to None, I have to explicitetly fill with bg color. */
 #define CLEAR_ROWS(row, num)						\
+{\
+    D_SCREEN((stderr, "%s %sCLEAR_ROWS%s: (%d -- %d)\n", __FUNCTION__,color_yellow, \
+	      color_reset,row, num));					\
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, r->TermWin.int_bwidth,	\
-		   Row2Pixel(row), (unsigned int)r->TermWin.width,	\
-		   (unsigned int)Height2Pixel(num), False)
+	XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		       r->TermWin.int_bwidth, Row2Pixel(row),	\
+		       (unsigned int)r->TermWin.width,	\
+		       (unsigned int)Height2Pixel(num)); \
+}
 
+/* mmc: Since I set the background to None, I have to explicitely fill with bg color. */
 #define CLEAR_CHARS(x, y, num)						\
+{\
+    D_SCREEN((stderr, "%s CLEAR_CHARS: (%d, %d -- %d)\n", __FUNCTION__,x, y, num));\
+    \
     if (r->TermWin.mapped)						\
-	XClearArea(r->Xdisplay, drawBuffer, x, y,			\
+       XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.background_gc,		\
+		   x, y,					   \
 		   (unsigned int)Width2Pixel(num),			\
-		   (unsigned int)Height2Pixel(1), False)
+		      (unsigned int)Height2Pixel(1));		   \
+}
 
+/* mmc:  Foreground color!  XFillRectangle  */
 #define ERASE_ROWS(row, num)						\
     XFillRectangle(r->Xdisplay, drawBuffer, r->TermWin.gc,		\
 		   r->TermWin.int_bwidth, Row2Pixel(row),		\
 		   (unsigned int)r->TermWin.width,			\
-		   (unsigned int)Height2Pixel(num))
+		   (unsigned int)Height2Pixel(num));\
+}
 
 /* ------------------------------------------------------------------------- *
  *                        SCREEN `COMMON' ROUTINES                           *
@@ -1720,6 +1734,18 @@ enum {
     RC_COUNT
 };
 
+/*
+ * Fill explicitly, instead of relying on implicit fill by the X server (on Expose)
+ */
+void
+fill_area(Display* dpy, Drawable d, GC gc, int x, int y, int width, int height)
+{
+#if 0                           /* mmc_debug */
+    fprintf(stderr, "%s: filling %d,%d - %d,%d\n", __FUNCTION__, x, y, width, height);
+#endif
+    XFillRectangle(dpy, d, gc, x, y, width, height);
+}
+
 /* EXTPROTO */
 void
 rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
@@ -1730,6 +1756,28 @@ rxvt_scr_expose(rxvt_t *r, int x, int y, int width, int height, Bool refresh)
     if (r->drawn_text == NULL)	/* sanity check */
 	return;
 
+    /* mmc: I clean the top window outside the VT window. It used to be done by implicit background,
+     * now I have to explicitely  */
+    int mw = INTERNALBORDERWIDTH;
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 mw,  TermWin_TotalHeight());
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 TermWin_TotalWidth() -mw,
+		 0,
+		 mw, TermWin_TotalHeight());
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,0,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
+
+    fill_area(r->Xdisplay, r->TermWin.vt, r->TermWin.background_gc, /* r->h->colorfgbg */
+		 0,TermWin_TotalHeight()-mw,
+		 /* mmc: unfortunately the text drawing start offset  */
+		 TermWin_TotalWidth() ,mw);
 #ifdef DEBUG_STRICT
     x = max(x, (int)r->TermWin.int_bwidth);
     x = min(x, (int)r->TermWin.width);
@@ -2563,7 +2611,7 @@ rxvt_scr_clear(rxvt_t *r)
     if (!r->TermWin.mapped)
 	return;
     r->h->num_scr_allow = 0;
-    r->h->want_refresh = 1;
+    r->h->want_refresh = FAST_REFRESH;
 #ifdef TRANSPARENT
     if ((r->Options & Opt_transparent) && (r->h->am_pixmap_trans == 0)) {
 	int             i;
@@ -2577,7 +2625,9 @@ rxvt_scr_clear(rxvt_t *r)
 		XClearWindow(r->Xdisplay, r->TermWin.parent[i]);
     }
 #endif
+#if 0                           /* mmc */
     XClearWindow(r->Xdisplay, r->TermWin.vt);
+#endif
 }
 
 /* ------------------------------------------------------------------------- */

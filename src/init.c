@@ -1072,7 +1072,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     XGCValues       gcvalue;
 
 #ifdef PREFER_24BIT
-    XSetWindowAttributes attributes;
+    XSetWindowAttributes attributes = {0};
     XWindowAttributes gattr;
 
     XCMAP = DefaultColormap(r->Xdisplay, Xscreen);
@@ -1114,7 +1114,7 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
  */
 
 #ifdef PREFER_24BIT
-    attributes.background_pixel = r->PixColors[Color_fg];
+    attributes.background_pixmap = None;
     attributes.border_pixel = r->PixColors[Color_border];
     attributes.colormap = XCMAP;
     r->TermWin.parent[0] = XCreateWindow(r->Xdisplay, Xroot,
@@ -1123,9 +1123,10 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					 r->TermWin.ext_bwidth,
 					 XDEPTH, InputOutput,
 					 XVISUAL,
-					 CWBackPixel | CWBorderPixel
+					 CWBackPixmap | CWBorderPixel
 					 | CWColormap, &attributes);
 #else
+    /* mmc: I don't use this */
     r->TermWin.parent[0] = XCreateSimpleWindow(r->Xdisplay, Xroot,
 					       r->szHint.x, r->szHint.y,
 					       r->szHint.width,
@@ -1173,6 +1174,15 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
 					0,
 					r->PixColors[Color_fg],
 					r->PixColors[Color_bg]);
+    {
+	XSetWindowAttributes attributes = {0};
+	attributes.background_pixmap = None;
+
+
+	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+				CWBackPixmap | CWBitGravity | CWWinGravity,
+				&attributes);
+    }
 #ifdef DEBUG_X
     XStoreName(r->Xdisplay, r->TermWin.vt, "vt window");
 #endif
@@ -1222,6 +1232,14 @@ rxvt_Create_Windows(rxvt_t *r, int argc, const char *const *argv)
     r->TermWin.gc = XCreateGC(r->Xdisplay, r->TermWin.vt,
 			      GCForeground | GCBackground
 			      | GCFont | GCGraphicsExposures, &gcvalue);
+
+    /* mmc:   I could use ClearArea instead of FillArea (& then not need this)?*/
+    gcvalue.foreground = r->PixColors[Color_bg];
+    gcvalue.background = r->PixColors[Color_fg];
+    r->TermWin.background_gc = XCreateGC(r->Xdisplay, r->TermWin.vt,
+					 GCForeground | GCBackground
+					 /* | GCFont | GCGraphicsExposures */,
+					 &gcvalue);
 
 #if defined(MENUBAR) || defined(RXVT_SCROLLBAR)
     gcvalue.foreground = r->PixColors[Color_topShadow];
