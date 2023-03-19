@@ -2894,6 +2894,7 @@ rxvt_selection_request_other(rxvt_t *r, Atom target, int selnum)
 	sel = XA_SECONDARY;
     else
 	sel = r->h->xa[XA_CLIPBOARD];
+
     if (XGetSelectionOwner(r->Xdisplay, sel) != None) {
 	D_SELECT((stderr, "rxvt_selection_request_other: pasting %s", debug_xa_names[selnum]));
 	XConvertSelection(r->Xdisplay, sel, target, r->h->xa[XA_VT_SELECTION],
