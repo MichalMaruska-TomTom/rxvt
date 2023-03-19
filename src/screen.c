@@ -2860,6 +2860,9 @@ rxvt_selection_request(rxvt_t *r, Time tm, int x, int y)
 #else
 	    r->h->selection_type = 0;
 #endif
+	    if (i == Sel_Secondary)
+	      continue;
+
 	    if (rxvt_selection_request_other(r,
 #ifdef MULTICHAR_SET
 					     r->h->xa[XA_COMPOUND_TEXT],
