@@ -1,0 +1,28 @@
+segment fixes          heads/base
+segment bg-none        heads/base
+sum mid                
+                       fixes
+                       bg-none
+segment new-sequences  heads/base
+segment mmc-debug      heads/base
+segment gravity        heads/mid
+sum mid2               
+                       new-sequences
+                       mmc-debug
+                       bg-none
+sum gravity-sum        
+                       gravity
+                       new-sequences
+segment mmc-debian     heads/base
+segment scrolling      heads/mid2
+segment keys           heads/base
+segment mmc-pid        heads/base
+segment selection      heads/new-sequences
+segment user-gravity   heads/gravity-sum
+sum mmc-all            
+                       mmc-debian
+                       scrolling
+                       keys
+                       mmc-pid
+                       selection
+                       user-gravity
