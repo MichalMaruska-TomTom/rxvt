@@ -618,7 +618,7 @@ enum {
     XA_CLIPBOARD,
     XA_NET_WM_PID,
     NUM_XA
-} ;
+};
 
 /*
  * number of graphics points
@@ -911,7 +911,8 @@ struct rxvt_hidden {
                     parsed_geometry;
 #endif	/* !__GNUC__ */
 
-    unsigned char   refresh_type,
+    int             vt_bit_gravity;  /*  The bit gravity inside the VT window */
+    unsigned char   refresh_type, // tracks the visibility changes.
 #ifdef UTMP_SUPPORT
                     next_utmp_action,
 #endif
@@ -1156,7 +1157,7 @@ struct rxvt_hidden {
 #endif
 
 #ifndef XPM_BACKGROUND		/* sync functions with xpm.extpro */
-# define rxvt_scale_pixmap(r, geom)	(0)
+# define rxvt_scale_pixmap(r, geom)	0
 # define rxvt_resize_pixmap(r)
 # define rxvt_set_bgPixmap(r, file)	(0)
 #endif

@@ -710,9 +710,10 @@ rxvt_cmd_getc(rxvt_t *r)
     int             quick_timeout, select_res;
     struct timeval  value;
     struct rxvt_hidden *h = r->h;
+    int    tryX = 1;
 
     if (h->cmdbuf_ptr < h->cmdbuf_endp)	/* characters already read in */
-        return *h->cmdbuf_ptr++;
+	return *h->cmdbuf_ptr++;
 
     for (;;) {
     /* loop until we can return something */
@@ -720,10 +721,13 @@ rxvt_cmd_getc(rxvt_t *r)
 	if (h->v_bufstr < h->v_bufptr)	/* output any pending chars */
 	    rxvt_tt_write(r, NULL, 0);
 
+	/* fixme: after SELECT we know this! */
+	if (tryX)
 	while (XPending(r->Xdisplay)) {	/* process pending X events */
 	    XEvent          xev;
 
 	    XNextEvent(r->Xdisplay, &xev);
+	    // fprintf(stderr, "%s%d%s\n", color_red, xev.xany.window, color_reset);
 #ifdef USE_XIM
 	    if (!XFilterEvent(&xev, xev.xany.window))
 		rxvt_process_x_event(r, &xev);
@@ -774,16 +778,22 @@ rxvt_cmd_getc(rxvt_t *r)
 	if (!r->TermWin.mapped)
 	    quick_timeout = 0;
 	else {
-	    quick_timeout |= h->want_refresh;
+	    /* if not visible (even though mapped) -> idem! */
+	    if (h->refresh_type == NO_REFRESH) {
+		quick_timeout = 0;
+	    } else {
+		quick_timeout |= h->want_refresh;
 #ifdef TRANSPARENT
-	    quick_timeout |= h->want_full_refresh;
+		quick_timeout |= h->want_full_refresh;
 #endif
+	    }
 	}
 	if ((select_res = select(r->num_fds, &readfds, NULL, NULL,
 				 (quick_timeout ? &value : NULL))) == 0) {
 	/* select statement timed out - we're not hard and fast scrolling */
 	    h->refresh_limit = 1;
 	}
+	tryX = FD_ISSET(r->Xfd, &readfds);
 
     /* See if we can read new data from the application */
 	if (select_res > 0 && FD_ISSET(r->cmd_fd, &readfds)) {
@@ -1059,6 +1069,7 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 
     case MappingNotify:
 	XRefreshKeyboardMapping(&(ev->xmapping));
+	rxvt_get_ourmods(r);
 	break;
 
     /*
@@ -1086,24 +1097,31 @@ rxvt_process_x_event(rxvt_t *r, XEvent *ev)
 	break;
 
     case FocusIn:
-	if (!r->TermWin.focus) {
-	    r->TermWin.focus = 1;
-	    h->want_refresh = 1;
+	if (!(ev->xfocus.detail == NotifyPointer))
+	{
+	    /* mode == NotifyGrab) */
+	    if (!r->TermWin.focus) {
+		r->TermWin.focus = 1;
+		h->want_refresh = 1;
 #ifdef USE_XIM
-	    if (h->Input_Context != NULL)
-		XSetICFocus(h->Input_Context);
+		if (h->Input_Context != NULL)
+		    XSetICFocus(h->Input_Context);
 #endif
+	    }
 	}
 	break;
 
     case FocusOut:
-	if (r->TermWin.focus) {
-	    r->TermWin.focus = 0;
-	    h->want_refresh = 1;
+	if (!(ev->xfocus.detail == NotifyPointer))
+	{
+	    if (r->TermWin.focus) {
+		r->TermWin.focus = 0;
+		h->want_refresh = 1;
 #ifdef USE_XIM
-	    if (h->Input_Context != NULL)
-		XUnsetICFocus(h->Input_Context);
+		if (h->Input_Context != NULL)
+		    XUnsetICFocus(h->Input_Context);
 #endif
+	    }
 	}
 	break;
 
@@ -1982,6 +2000,69 @@ rxvt_process_escape_seq(rxvt_t *r)
 	break;
 #endif
 #ifndef NO_FRILLS
+    case '1': {
+        /* mmc: Toggle Static & NW gravity: */
+        XSetWindowAttributes attributes = {0};
+        fprintf(stderr, "setting Window gravity\n");
+        attributes.win_gravity = NorthWestGravity;
+        XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+                                CWWinGravity,
+                                &attributes);
+        break;
+    }
+    case '2':
+        r->h->vt_bit_gravity = NorthWestGravity;
+        break;
+    case '3':
+	r->h->vt_bit_gravity = StaticGravity;
+	break;
+    case '4':
+#if mmc_debug
+        fprintf(stderr, "mmc! %d %d -> PRIMARY\n", r->h->current_output, PRIMARY);
+#endif
+        r->h->check_for_scrolling = 1;
+	r->h->current_output = PRIMARY;
+	break;
+
+    case '5':                   /* This starts a transaction */
+#if mmc_debug
+        fprintf(stderr, "mmc! %d %d ->SECONDARY\n", r->h->current_output, SECONDARY);
+#endif
+        /* fixme: copy ! */
+	r->h->current_output = SECONDARY;
+        {
+            /* ugly hack, sorry */
+            int offset = r->TermWin.saveLines; /* (mmc:) number of lines that fit in scrollback */
+            int i;
+            for (i = r->h->prev_nrow; i--;) {
+                int ncol = r->h->prev_ncol; /* fixme: r->TermWin.ncol ?*/
+                if (NULL == r->snapshot.text[i])
+                    {
+                        r->snapshot.text[i] = rxvt_calloc(ncol, sizeof(text_t));
+                        r->snapshot.rend[i] = rxvt_calloc(ncol, sizeof(rend_t));
+                    }
+#if 1
+                /* not from ->screen ? but sometimes also from ->swap ? */
+                memcpy(r->snapshot.text[i], r->screen.text[i + offset], (sizeof (text_t) * ncol));
+                memcpy(r->snapshot.rend[i], r->screen.rend[i + offset], (sizeof (rend_t) * ncol));
+                r->snapshot.tlen[i] = r->screen.tlen[i + offset];
+
+                if (ncol < r->snapshot.tlen[i])
+                        fprintf(stderr, "!!!! %d > %d\n", r->snapshot.tlen[i], ncol);
+
+#else                /* old! */
+                memcpy(r->swap.text[i], r->screen.text[i + offset],
+                       /* ??*/
+                       (sizeof (text_t) * ncol));
+                memcpy(r->swap.rend[i], r->screen.rend[i + offset],
+                       (sizeof (rend_t) * ncol));
+
+                 r->swap.tlen[i] = r->screen.tlen[i + offset];
+#endif
+            }
+        }
+	break;
+
     case '6':
 	rxvt_scr_backindex(r);
 	break;
@@ -2403,7 +2484,6 @@ void
 rxvt_process_window_ops(rxvt_t *r, const int *args, unsigned int nargs)
 {
     int             x, y;
-    char           *s;
     XWindowAttributes wattr;
     Window          wdummy;
 
@@ -2557,16 +2637,81 @@ rxvt_process_osc_seq(rxvt_t *r)
      * rxvt_menubar_dispatch() violates the constness of the string,
      * so do it here
      */
-	    if (arg == XTerm_Menu)
+	    if (arg == XTerm_Menu) {
 #if 0 /* XXX: currently disabled due to security concerns */
 		rxvt_menubar_dispatch(r, (char *)s);
 #else
-		0;
 #endif
-	    else
+	    } else
 		rxvt_xterm_seq(r, arg, (char *)s, eh);
 	    free(s);
 	}
+    }
+}
+
+/**
+ * Convert the string STR "NW" into a numeric value & set the gravity.
+ */
+/* INTPROTO */
+void
+rxvt_set_gravity(rxvt_t* r, const char* str)
+{
+  /* todo: in alist (struct) */
+    int trans[9]={
+	// 0
+	// StaticGravity
+	0,WestGravity,EastGravity,
+	// 4:
+	NorthGravity,
+	NorthWestGravity,
+	NorthEastGravity,
+
+	SouthGravity,
+	SouthWestGravity,
+	SouthEastGravity,
+    };
+#if mmc_debug
+    char* names[9]={
+	"static",
+	"WestGravity",
+	"EastGravity",
+	// 4:
+	"NorthGravity",
+	"NorthWestGravity",
+	"NorthEastGravity",
+
+	"SouthGravity",
+	"SouthWestGravity",
+	"SouthEastGravity",
+    };
+#endif
+
+    int g = 0;
+    int i;
+
+    for (i=0; i< strlen(str); i++){
+	switch (str[i]) {
+	case 'N': g+= 3; break;
+	case 'S': g+= 6; break;
+
+	case 'W': g+= 1; break;
+	case 'E': g+= 2; break;
+	/* static */
+	}
+    }
+    if (g>8)
+	g=0;
+    {
+	/* mmc: Toggle Static & NW gravity: */
+	XSetWindowAttributes attributes = {0};
+#if mmc_debug
+	fprintf(stderr, "%s: setting Window gravity %s->%d, %s\n", __FUNCTION__, str, g, names[g]);
+	/* fprintf(stderr, "setting Window gravity\n");*/
+#endif
+	attributes.win_gravity = trans[g];
+	XChangeWindowAttributes(r->Xdisplay, r->TermWin.vt,
+				CWWinGravity,
+				&attributes);
     }
 }
 /*
@@ -2597,7 +2742,6 @@ void
 rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribute__((unused)))
 {
     int             changed = 0;
-    int             fd;
     int             color;
     char           *buf, *name;
 
@@ -2613,6 +2757,7 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
 	rxvt_assert_selection(r, str, strlen(str), CurrentTime, 0);
 	break;
     case XTerm_set_gravity:
+	rxvt_set_gravity(r, str);
 	break;
     case XTerm_title:
 	rxvt_set_title(r, str);
@@ -2685,6 +2830,7 @@ rxvt_xterm_seq(rxvt_t *r, int op, const char *str, unsigned char resp __attribut
 	break;
 #if 0
     case XTerm_dumpscreen:	/* no error notices */
+	int fd;
 	if ((fd = open(str, O_RDWR | O_CREAT | O_EXCL, 0600)) >= 0) {
 	    rxvt_scr_dump(r, fd);
 	    close(fd);
