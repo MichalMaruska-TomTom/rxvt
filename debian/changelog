@@ -1,3 +1,109 @@
+rxvt-beta (2.7.10-7-maruska1) focal; urgency=medium
+
+  * debian: drop quilt (patch & unpatch steps)
+  * Keep Alt Mask. Alt ... but not complete!!!
+  * scrolling with Alt-p/n & i/k
+  * set the PID on the window as _NET_WM_PID property
+  * add debianization: compat 9
+  * fix: on shrinking (vertically) the window, push the top lines into scroll-back
+  * optimize: avoid reading from X, when previous select() said nothing-there
+  * tabify
+  * When obscured don't rush to "update"; ignore it and stay in Select (without timeout 0).
+  * verbose
+  * Ignore focus events due to NotifyPointer
+  * refresh keyboard "modifiers" on MappingNotify, i.e. keymap-change.
+  * Don't switch on aplication-keyboard, on startup/init (todo: make it configurable!)
+  * Workaround occasional (frequent) deadlock on exit. -- don't call atexit(rxvt_clean_exit)
+  * Define and create the GC for filling with "background" color.
+  * When creating a window, use BG pixmap None, and bitGravity .
+  * Use XFillRectangle instead of XClearArea in useful macros.
+  * Avoid XSetWindowBackground call when setting custom background color or Pixmap.
+  * remove more XSetWindowBackgroundPixmap() calls because of transparency support.
+  * CWBackPixmap on the outer window, rather than BackPixel
+  * Handle the Expose evey by explicit fill -- where? the 4 sides around terminal text?
+  * rxvt_scr_clear does not XClearWindow -- it just asks for "refresh"
+  * tab AT
+  * change to EXTPROTO (keys)
+  * optimize: replace calloc with alloc (no zeroing needed).
+  * rxvt_alloc() to be used instead of Calloc
+  * color logging
+  * debug
+  * debhelper/compat 12
+  * Force color on GCC -- in rules
+  * .gitignore
+  * spaces
+  * drop unused variables
+  * use the correct INT_MAX, not MAX_INT
+  * fix: pty
+  * ok, only XIM
+  * fix misleading alignment
+  * safe
+  * spaces
+  * unsuccessful attempt to avoid warnings about .....
+  * feat: new Esc sequence to set Selection -- mockup
+  * new Esc sequence to set Gravity -- mockup
+  * smooth-scrolling parameters.
+  * Esc params for bell/override
+  * Introduce scroll1.c for parts of rxvt_scr_refresh() -- "clear_borders"
+  * spin-off & formalize cleanup_cursor_and_outline() functionality.
+  * verbose in cleanup_cursor_and_outline
+  * spin-off: set_cursor_characters() -- more flexible: primary/secondary ?
+  * spin-off:  try_to_scroll
+  * comments & logs
+  * refresh_type ?
+  * re-spin (from rxvt_scr_refresh): redraw_matrix & support functions:
+  * move macros
+  * introduce RS_needs_redraw: means the glyph cell has to be redrawn.
+  * mark_damaged_chars_from_left: use rs_needs_redraw
+  * add snapshot into "struct rxvt_vars"
+  * change PRIMARY from keyboard
+  * current-output
+  * keep the Snapshot: resize & deallocate
+  * exchange_snapshot_screen !
+  * update-matrix possibly from SECONDARY. make the algorithm work with either secondary or primary .... just a trick.
+  * clear vs Secondary
+  * change in variables for  rxvt_scr_refresh -- cleanup:
+  * Introduce heckel.c, add into the Build system
+  * Introduce scroll.c with new functions: verify_scroll, scroll_fluidly, try_to_scroll_smoothly.
+  * mark an explicit request for scrolling
+  * when I resize Window, deliver to rxvt_resize_all_windowsthe x/y as well
+  * even on slow link expose ....  Correct: unify, drop #if
+  * check-for-scrolling
+  * shift & snapshot
+  * try_to_scroll_smoothly
+  * xflush anyway!
+  * comments & tracing
+  * adapt rxvt_resize_all_windows  1
+  * dependency on scroll
+  * cannot hold inlines
+  * during screen tear-down ... unused
+  * Extract the selection (primary and cut_buffer0) setting
+  * scroll unused var
+  * assert CLIPBOARD as well, correctly Atom
+  * heckel drop
+  * assert_single_selection() & careful with selection time
+  * extra careful -- double check we own
+  * set selection from Esc -- implementation
+  * Bind C-M-y to paste the selection.
+  * Switch to ^T instead of ^R -- for print?
+  * enforce NOT listening on the property-changes on Root
+  * spaces
+  * don't request secondary
+  * space
+  * Print errors
+  * Use StaticGravity on the "outer" window?
+  * gravity of the inner / VT window. Fixme: somehow already set before.
+  * Static Window gravity for the outer. So, when growing, the inner stays.
+  * gravity param
+  * bit_gravity ?
+  * Gravity setting
+  * gravity: tabify & debug
+  * Esc seq. to set Gravity
+  * Esc seq to set SECONDARY display
+  * gravity -- implementation
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 11 Jun 2023 23:57:04 +0200
+
 rxvt-beta (2.7.10-6+mmc3) maverick; urgency=low
 
   * for maverick
